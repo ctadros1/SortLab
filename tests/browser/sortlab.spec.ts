@@ -14,6 +14,11 @@ async function chooseSandboxAlgorithm(page: Page, name: RegExp) {
   await page.getByRole('option', { name }).click()
 }
 
+async function chooseVisualizeAlgorithm(page: Page, name: RegExp) {
+  await page.getByRole('combobox', { name: 'Algorithm' }).click()
+  await page.getByRole('option', { name }).click()
+}
+
 test('Visualize keeps sound controls intentionally simple', async ({ page }) => {
   const assertNoConsoleErrors = failOnConsoleErrors(page)
   await page.goto('/#visualize')
@@ -25,6 +30,132 @@ test('Visualize keeps sound controls intentionally simple', async ({ page }) => 
   await expect(page.getByText('Pitch mode', { exact: true })).toHaveCount(0)
   await page.getByLabel('Sound preset').selectOption('soft')
   await expect(page.getByLabel('Sound preset')).toHaveValue('soft')
+  assertNoConsoleErrors()
+})
+
+test('Visualize uses independent desktop rails and page-level guide scrolling', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/#visualize')
+
+  const controls = page.locator('.control-rail')
+  const guide = page.locator('.code-panel')
+  await expect(controls).toHaveCSS('overflow-y', 'auto')
+  await expect(guide).toHaveCSS('overflow-y', 'visible')
+
+  const layout = await page.evaluate(() => {
+    const controls = document.querySelector<HTMLElement>('.control-rail')!
+    const guide = document.querySelector<HTMLElement>('.code-panel')!
+    return {
+      controlsTop: controls.getBoundingClientRect().top,
+      controlsBottom: controls.getBoundingClientRect().bottom,
+      controlsScrollable: controls.scrollHeight > controls.clientHeight,
+      guideTop: guide.getBoundingClientRect().top,
+      guideBottom: guide.getBoundingClientRect().bottom,
+      viewportHeight: window.innerHeight,
+    }
+  })
+  expect(layout.controlsScrollable).toBe(true)
+  expect(layout.controlsTop).toBeCloseTo(72, 0)
+  expect(layout.controlsBottom).toBeCloseTo(layout.viewportHeight, 0)
+  expect(layout.guideTop).toBeCloseTo(72, 0)
+  expect(layout.guideBottom).toBeGreaterThanOrEqual(layout.viewportHeight - 1)
+
+  await controls.evaluate((element) => {
+    element.scrollTop = element.scrollHeight
+  })
+  expect(await page.evaluate(() => window.scrollY)).toBe(0)
+
+  await guide.hover()
+  await page.mouse.wheel(0, 500)
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+  expect(await controls.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(
+    72,
+    0,
+  )
+  assertNoConsoleErrors()
+})
+
+test('Visualize code languages preserve semantic highlighting and persist', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/#visualize')
+
+  await expect(page.getByRole('tab', { name: 'Code' })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Pseudocode' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Next' }).click()
+  const activeLine = page.locator('.pseudocode li.is-current')
+  await expect(activeLine).toHaveCount(1)
+  const semanticId = await activeLine.getAttribute('data-semantic-line')
+  expect(semanticId).toBeTruthy()
+
+  const languageTrigger = page.getByRole('combobox', { name: 'Code language' })
+  const languages = ['Pseudocode', 'C', 'C++', 'Java', 'Python', 'JavaScript', 'TypeScript']
+  for (const language of languages) {
+    await languageTrigger.click()
+    await page.getByRole('option', { name: language, exact: true }).click()
+    await expect(languageTrigger).toContainText(language)
+    await expect(page.locator(`.pseudocode li[data-semantic-line="${semanticId}"]`)).toHaveClass(
+      /is-current/,
+    )
+  }
+
+  await page.reload()
+  await expect(page.getByRole('combobox', { name: 'Code language' })).toContainText('TypeScript')
+  assertNoConsoleErrors()
+})
+
+test('Visualize refines progress, legend, statistics, and complexity', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#visualize')
+
+  await expect(page.getByRole('progressbar')).toBeVisible()
+  await expect(page.getByLabel('Animation timeline')).toHaveCount(0)
+  await expect(page.getByText('Active boundary', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Animation duration reflects event count')).toHaveCount(0)
+  await expect(page.locator('.complexity-grid dt')).toHaveText(['Worst', 'Average', 'Best'])
+  await expect(page.locator('.complexity-summary').getByText('Space', { exact: true })).toHaveCount(
+    0,
+  )
+  await expect(page.locator('[data-stat="current-phase"]')).toBeVisible()
+  await expect(page.locator('[data-stat="js-execution"]')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1')
+  await expect(page.locator('.event-progress__current')).toBeVisible()
+  assertNoConsoleErrors()
+})
+
+test('Visualize highlights recursive, distribution, and network algorithms', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/#visualize')
+
+  for (const algorithm of [/^Merge Sort/, /^Counting Sort/, /^Bitonic Sort/]) {
+    await chooseVisualizeAlgorithm(page, algorithm)
+    await page.getByRole('button', { name: 'Next' }).click()
+    await expect(page.locator('.pseudocode li.is-current')).toHaveCount(1)
+    await expect(page.locator('.line-explanation')).not.toContainText(
+      'Start the algorithm to connect each visual operation',
+    )
+    await page.getByRole('button', { name: 'Reset' }).click()
+  }
+
+  assertNoConsoleErrors()
+})
+
+test('Visualize remains usable without horizontal page overflow on mobile', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/#visualize')
+
+  await expect(page.getByRole('tab', { name: 'Code' })).toBeVisible()
+  await expect(page.getByRole('combobox', { name: 'Code language' })).toBeVisible()
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
+  ).toBeLessThanOrEqual(1)
   assertNoConsoleErrors()
 })
 

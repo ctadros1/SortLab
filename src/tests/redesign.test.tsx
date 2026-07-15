@@ -148,7 +148,7 @@ describe('notation and marker layout', () => {
     expect(markerKindForEvent('swap')).toBe('swap')
     expect(markerKindForEvent('pivot')).toBe('pivot')
     expect(markerKindForEvent('write')).toBe('write')
-    expect(markerKindForEvent('range')).toBe('range')
+    expect(markerKindForEvent('range')).toBeNull()
   })
 
   it('reserves marker and value headroom and hides labels at dense widths', () => {
