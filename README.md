@@ -106,7 +106,7 @@ docker compose up -d
 docker compose ps
 ```
 
-The production image is a multi-stage Node build served by unprivileged Nginx on container port 8080. Compose maps `192.168.75.59:8787`, drops Linux capabilities, forbids privilege escalation, uses a read-only root filesystem, gives Nginx a small temporary filesystem, rotates logs, and attaches only an internal project network.
+The production image is a multi-stage Node build served by unprivileged Nginx on container port 8080. Compose maps only `192.168.75.59:8787`, drops Linux capabilities, forbids privilege escalation, uses a read-only root filesystem, gives Nginx a small temporary filesystem, rotates logs, and attaches an isolated project bridge.
 
 ## Updating
 

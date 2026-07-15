@@ -42,4 +42,4 @@ Controls use semantic buttons, labels, inputs, tables, headings, and regions. Vi
 
 ## Security
 
-Nginx provides CSP, frame denial, content-type protection, a restrictive permissions policy, no-referrer policy, immutable hashed-asset caching, and no-store HTML. Compose runs a non-root process with no capabilities, no new privileges, a read-only filesystem, no Docker socket or host mounts, and no outbound network on the internal bridge.
+Nginx provides CSP, frame denial, content-type protection, a restrictive permissions policy, no-referrer policy, immutable hashed-asset caching, and no-store HTML. Compose runs a non-root process with no capabilities, no new privileges, a read-only filesystem, no Docker socket or host mounts, and a dedicated bridge whose published port is bound only to the LAN address.
