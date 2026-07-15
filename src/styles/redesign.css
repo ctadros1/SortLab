@@ -45,8 +45,12 @@
 
   .code-panel {
     grid-column: 3;
-    position: sticky;
+    position: fixed;
     top: var(--header-height);
+    right: 0;
+    bottom: 0;
+    width: 390px;
+    height: calc(100dvh - var(--header-height));
     min-height: calc(100dvh - var(--header-height));
     max-height: none;
     overflow: visible;
@@ -1880,8 +1884,12 @@ input[type='range'] {
 
   .code-panel {
     grid-column: 3;
-    position: sticky;
+    position: fixed;
     top: var(--header-height);
+    right: 0;
+    bottom: 0;
+    width: 390px;
+    height: calc(100dvh - var(--header-height));
     min-height: calc(100dvh - var(--header-height));
     max-height: none;
     overflow: visible;

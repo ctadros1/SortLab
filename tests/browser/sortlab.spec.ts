@@ -75,6 +75,7 @@ test('Visualize uses independent desktop rails and page-level guide scrolling', 
     72,
     0,
   )
+  expect(await guide.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(72, 0)
   assertNoConsoleErrors()
 })
 
