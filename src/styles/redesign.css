@@ -451,6 +451,10 @@ input[type='range'] {
   gap: 9px;
 }
 
+.picker-selection--text-only {
+  gap: 0;
+}
+
 .picker-selection > span:last-child {
   min-width: 0;
 }
@@ -618,7 +622,7 @@ input[type='range'] {
 }
 
 .algorithm-option__title,
-.dataset-option__copy > span {
+.dataset-option__title {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -629,7 +633,7 @@ input[type='range'] {
 }
 
 .algorithm-option__title svg:last-child,
-.dataset-option__copy > span svg:last-child {
+.dataset-option__title svg:last-child {
   margin-left: auto;
   color: var(--blue);
 }

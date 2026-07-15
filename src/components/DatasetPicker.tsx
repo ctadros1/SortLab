@@ -1,6 +1,6 @@
 import type { DatasetMode } from '../types'
 import { getDatasetOptions } from '../ui/pickerOptions'
-import { AppIcon, DatasetIcon } from './Icon'
+import { AppIcon } from './Icon'
 import { RichCombobox } from './RichCombobox'
 
 function DatasetPreview({ values }: { values: number[] }) {
@@ -29,12 +29,9 @@ export function DatasetPicker({ value, onChange, disabled }: Props) {
       onChange={(next) => onChange(next as DatasetMode)}
       disabled={disabled}
       prominent
-      searchPlaceholder="Search dataset patterns"
+      searchable={false}
       renderSelected={(option) => (
-        <span className="picker-selection">
-          <span className="picker-icon picker-icon--dataset" aria-hidden="true">
-            <DatasetIcon name={option.dataset.icon} />
-          </span>
+        <span className="picker-selection picker-selection--text-only">
           <span>
             <strong>{option.dataset.name}</strong>
             <small>{option.dataset.description}</small>
@@ -45,8 +42,7 @@ export function DatasetPicker({ value, onChange, disabled }: Props) {
         <span className="dataset-option">
           <DatasetPreview values={option.dataset.preview} />
           <span className="dataset-option__copy">
-            <span>
-              <DatasetIcon name={option.dataset.icon} aria-hidden="true" size={16} />
+            <span className="dataset-option__title">
               <strong>{option.dataset.name}</strong>
               {selected ? <AppIcon name="check" aria-hidden="true" size={15} /> : null}
             </span>

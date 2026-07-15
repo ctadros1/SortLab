@@ -17,7 +17,8 @@ interface Props<T extends RichOption> {
   onChange: (value: string) => void
   renderSelected: (option: T) => ReactNode
   renderOption: (option: T, selected: boolean) => ReactNode
-  searchPlaceholder: string
+  searchPlaceholder?: string
+  searchable?: boolean
   disabled?: boolean
   prominent?: boolean
 }
@@ -30,6 +31,7 @@ export function RichCombobox<T extends RichOption>({
   renderSelected,
   renderOption,
   searchPlaceholder,
+  searchable = true,
   disabled = false,
   prominent = false,
 }: Props<T>) {
@@ -38,10 +40,15 @@ export function RichCombobox<T extends RichOption>({
   const wrapperRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+  const typeaheadRef = useRef('')
+  const typeaheadTimerRef = useRef<number | undefined>(undefined)
   const restoreFocusRef = useRef(false)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const filtered = useMemo(() => filterRichOptions(options, query), [options, query])
+  const filtered = useMemo(
+    () => (searchable ? filterRichOptions(options, query) : options),
+    [options, query, searchable],
+  )
   const selected = options.find((option) => option.id === value) ?? options[0]
   const selectedIndex = Math.max(
     0,
@@ -61,9 +68,16 @@ export function RichCombobox<T extends RichOption>({
       }
     }
     document.addEventListener('pointerdown', onPointerDown)
-    window.setTimeout(() => searchRef.current?.focus(), 0)
+    if (searchable) window.setTimeout(() => searchRef.current?.focus(), 0)
     return () => document.removeEventListener('pointerdown', onPointerDown)
-  }, [open])
+  }, [open, searchable])
+
+  useEffect(
+    () => () => {
+      if (typeaheadTimerRef.current) window.clearTimeout(typeaheadTimerRef.current)
+    },
+    [],
+  )
 
   useEffect(() => {
     if (!open && restoreFocusRef.current) {
@@ -73,6 +87,8 @@ export function RichCombobox<T extends RichOption>({
   }, [open])
 
   const close = (restoreFocus = true) => {
+    if (typeaheadTimerRef.current) window.clearTimeout(typeaheadTimerRef.current)
+    typeaheadRef.current = ''
     restoreFocusRef.current = restoreFocus
     setOpen(false)
     setQuery('')
@@ -122,9 +138,27 @@ export function RichCombobox<T extends RichOption>({
       close()
       return
     }
-    if (!open && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-      setQuery(event.key)
-      setOpen(true)
+    if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault()
+      if (searchable) {
+        if (!open) {
+          setQuery(event.key)
+          setOpen(true)
+        }
+        return
+      }
+
+      if (typeaheadTimerRef.current) window.clearTimeout(typeaheadTimerRef.current)
+      typeaheadRef.current += event.key.toLowerCase()
+      const matchIndex = options.findIndex(
+        (option) =>
+          !option.disabled && option.searchText.toLowerCase().includes(typeaheadRef.current),
+      )
+      if (matchIndex >= 0) setActiveIndex(matchIndex)
+      if (!open) setOpen(true)
+      typeaheadTimerRef.current = window.setTimeout(() => {
+        typeaheadRef.current = ''
+      }, 700)
     }
   }
 
@@ -154,20 +188,22 @@ export function RichCombobox<T extends RichOption>({
       </button>
       {open ? (
         <div className="rich-select__popover">
-          <label className="rich-select__search">
-            <AppIcon name="search" aria-hidden="true" />
-            <span className="sr-only">Search {label.toLowerCase()}</span>
-            <input
-              ref={searchRef}
-              type="search"
-              value={query}
-              placeholder={searchPlaceholder}
-              aria-controls={listboxId}
-              aria-activedescendant={activeOption ? `${id}-option-${activeOption.id}` : undefined}
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={handleKeys}
-            />
-          </label>
+          {searchable ? (
+            <label className="rich-select__search">
+              <AppIcon name="search" aria-hidden="true" />
+              <span className="sr-only">Search {label.toLowerCase()}</span>
+              <input
+                ref={searchRef}
+                type="search"
+                value={query}
+                placeholder={searchPlaceholder}
+                aria-controls={listboxId}
+                aria-activedescendant={activeOption ? `${id}-option-${activeOption.id}` : undefined}
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={handleKeys}
+              />
+            </label>
+          ) : null}
           <div className="rich-select__list" role="listbox" id={listboxId} aria-label={label}>
             {groups.length === 0 ? (
               <p className="rich-select__empty">No matching options.</p>
@@ -203,6 +239,9 @@ export function RichCombobox<T extends RichOption>({
                           onPointerMove={() => setActiveIndex(index)}
                           onClick={() => {
                             if (option.disabled) return
+                            if (typeaheadTimerRef.current)
+                              window.clearTimeout(typeaheadTimerRef.current)
+                            typeaheadRef.current = ''
                             onChange(option.id)
                             restoreFocusRef.current = true
                             setOpen(false)

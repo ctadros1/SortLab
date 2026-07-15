@@ -7,6 +7,7 @@ import {
   searchAlgorithms,
 } from '../algorithms/registry'
 import { AlgorithmPicker } from '../components/AlgorithmPicker'
+import { DatasetPicker } from '../components/DatasetPicker'
 import { MathNotation } from '../components/MathNotation'
 import { RichCombobox } from '../components/RichCombobox'
 import { Switch } from '../components/Switch'
@@ -107,6 +108,15 @@ describe('accessible interaction utilities', () => {
     expect(html).toContain('Exchange sorts')
     expect(nextSwitchState(false)).toBe(true)
     expect(nextSwitchState(true)).toBe(false)
+  })
+
+  it('renders the selected dataset without an extra inline icon', () => {
+    const html = renderToStaticMarkup(
+      <DatasetPicker value="nearly-sorted" onChange={() => undefined} />,
+    )
+    expect(html).toContain('Nearly sorted')
+    expect(html).toContain('picker-selection--text-only')
+    expect(html).not.toContain('picker-icon--dataset')
   })
 
   it('renders a plain switch without reserving an empty icon column', () => {
