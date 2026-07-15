@@ -39,4 +39,3 @@ networks:
   sorting-playground:
     name: sorting-playground
     driver: bridge
-    internal: true
