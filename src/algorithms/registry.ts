@@ -1,4 +1,43 @@
-import type { AlgorithmFamily, AlgorithmMeta } from '../types'
+import type { AlgorithmFamily, AlgorithmIconId, AlgorithmMeta } from '../types'
+
+export const algorithmIconAssignments: Record<string, AlgorithmIconId> = {
+  bubble: 'adjacent',
+  'bubble-optimized': 'arrows',
+  selection: 'selection',
+  insertion: 'insertion',
+  'binary-insertion': 'binary',
+  cocktail: 'arrows',
+  gnome: 'adjacent',
+  comb: 'arrows',
+  'odd-even': 'network',
+  merge: 'merge',
+  'merge-top-down': 'merge',
+  'merge-bottom-up': 'strand',
+  quick: 'partition',
+  'quick-lomuto': 'partition',
+  'quick-hoare': 'arrows',
+  'quick-randomized': 'cycle',
+  'quick-three-way': 'partition',
+  heap: 'heap',
+  shell: 'insertion',
+  timsort: 'merge',
+  introsort: 'heap',
+  counting: 'digits',
+  'radix-lsd': 'digits',
+  'radix-msd': 'binary',
+  bucket: 'buckets',
+  pigeonhole: 'buckets',
+  cycle: 'cycle',
+  pancake: 'pancake',
+  strand: 'strand',
+  tree: 'heap',
+  tournament: 'tournament',
+  bitonic: 'network',
+  'batcher-odd-even': 'network',
+  stooge: 'warning',
+  slow: 'warning',
+  bogo: 'warning',
+}
 
 type Entry = Partial<AlgorithmMeta> &
   Pick<
@@ -38,9 +77,38 @@ const defaultCode = [
   },
 ]
 
+const familyInvariants: Record<AlgorithmFamily, string> = {
+  Exchange: 'Values outside the active pair remain unchanged during each comparison.',
+  Selection: 'The finalized prefix contains the smallest values in their final positions.',
+  Insertion: 'The prefix before the active key remains sorted after every insertion.',
+  Merge: 'Each source range is sorted before it is merged into the destination range.',
+  Partition: 'Values are moved toward the correct side of the current pivot boundary.',
+  Heap: 'The active heap keeps every parent ordered relative to its children.',
+  Distribution: 'Every input value is assigned to exactly one count, digit group, or bucket.',
+  Network: 'Each compare-exchange wire preserves the input multiset while improving order.',
+  Hybrid: 'Every delegated subrange is completed before it is combined with adjacent work.',
+  Novelty: 'Every operation preserves the multiset even when the strategy is impractical.',
+}
+
+const familyNotices: Record<AlgorithmFamily, string> = {
+  Exchange: 'Watch inversions disappear one local swap at a time.',
+  Selection: 'Watch the chosen minimum move directly into the finalized prefix.',
+  Insertion: 'Watch the sorted prefix grow as larger values shift right.',
+  Merge: 'Watch two ordered ranges become one larger ordered range.',
+  Partition: 'Watch the pivot boundary separate smaller and larger values.',
+  Heap: 'Watch the root repeatedly expose the largest remaining value.',
+  Distribution: 'Watch values move by value structure instead of pairwise comparison.',
+  Network: 'Watch fixed compare-exchange stages operate independently.',
+  Hybrid: 'Watch the algorithm switch strategies as range size or recursion changes.',
+  Novelty: 'Watch how quickly an intentionally poor strategy accumulates work.',
+}
+
 function define(entry: Entry): AlgorithmMeta {
-  return {
+  const merged = {
     aliases: [],
+    searchTerms: [],
+    invariant: familyInvariants[entry.family],
+    notice: familyNotices[entry.family],
     steps: [
       `Identify the next ${entry.family.toLowerCase()}-sort operation.`,
       'Compare or distribute the active values using the algorithm’s rule.',
@@ -64,6 +132,20 @@ function define(entry: Entry): AlgorithmMeta {
     hardMax: 120,
     pseudocode: defaultCode,
     ...entry,
+  }
+  const caution = merged.warning ? 'pathological' : merged.approximation ? 'educational' : 'none'
+  const badges = [
+    merged.stable ? 'Stable' : 'Unstable',
+    merged.inPlace ? 'In place' : 'Extra space',
+    merged.complexity.average,
+  ]
+  return {
+    ...merged,
+    icon: algorithmIconAssignments[entry.id] ?? 'adjacent',
+    optionDescription: entry.shortDescription,
+    badges,
+    caution,
+    searchTerms: [entry.family, entry.name, ...merged.aliases, ...merged.searchTerms],
   }
 }
 
@@ -728,6 +810,46 @@ export const families: AlgorithmFamily[] = [
   'Hybrid',
   'Novelty',
 ]
+
+export const familyLabels: Record<AlgorithmFamily, string> = {
+  Exchange: 'Exchange sorts',
+  Selection: 'Selection sorts',
+  Insertion: 'Insertion sorts',
+  Merge: 'Merge sorts',
+  Partition: 'Partition / quick sorts',
+  Heap: 'Heap-based sorts',
+  Distribution: 'Distribution sorts',
+  Network: 'Network sorts',
+  Hybrid: 'Hybrid sorts',
+  Novelty: 'Novelty and impractical sorts',
+}
+
+export function searchAlgorithms(query: string, algorithms = algorithmRegistry) {
+  const normalized = query.trim().toLowerCase()
+  if (!normalized) return algorithms
+  return algorithms.filter((algorithm) =>
+    [
+      algorithm.name,
+      algorithm.family,
+      algorithm.shortDescription,
+      ...algorithm.aliases,
+      ...algorithm.searchTerms,
+    ]
+      .join(' ')
+      .toLowerCase()
+      .includes(normalized),
+  )
+}
+
+export function groupAlgorithms(algorithms = algorithmRegistry) {
+  return families
+    .map((family) => ({
+      id: family,
+      label: familyLabels[family],
+      items: algorithms.filter((algorithm) => algorithm.family === family),
+    }))
+    .filter((group) => group.items.length > 0)
+}
 
 export function validateAlgorithmInput(id: string, values: number[]) {
   const algorithm = algorithmById.get(id)

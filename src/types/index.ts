@@ -44,13 +44,40 @@ export type AlgorithmFamily =
   | 'Hybrid'
   | 'Novelty'
 
+export type AlgorithmIconId =
+  | 'adjacent'
+  | 'arrows'
+  | 'binary'
+  | 'buckets'
+  | 'cycle'
+  | 'digits'
+  | 'heap'
+  | 'insertion'
+  | 'merge'
+  | 'network'
+  | 'pancake'
+  | 'partition'
+  | 'selection'
+  | 'strand'
+  | 'tournament'
+  | 'warning'
+
+export type AlgorithmCaution = 'none' | 'educational' | 'pathological'
+
 export interface AlgorithmMeta {
   id: string
   name: string
   aliases: string[]
+  searchTerms: string[]
   family: AlgorithmFamily
+  icon: AlgorithmIconId
+  optionDescription: string
+  badges: string[]
+  caution: AlgorithmCaution
   shortDescription: string
   centralIdea: string
+  invariant: string
+  notice: string
   steps: string[]
   example: string
   complexity: { best: string; average: string; worst: string; space: string }
@@ -82,5 +109,26 @@ export type DatasetMode =
   | 'sawtooth'
   | 'groups'
   | 'custom'
+
+export type DatasetIconId =
+  | 'random'
+  | 'nearly-sorted'
+  | 'reversed'
+  | 'sorted'
+  | 'few-unique'
+  | 'duplicates'
+  | 'sawtooth'
+  | 'groups'
+  | 'custom'
+
+export interface DatasetMeta {
+  id: DatasetMode
+  name: string
+  description: string
+  icon: DatasetIconId
+  preview: number[]
+  searchTerms: string[]
+  constraints?: string
+}
 
 export type PlaybackStatus = 'idle' | 'running' | 'paused' | 'complete'
