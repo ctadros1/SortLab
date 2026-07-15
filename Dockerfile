@@ -4,7 +4,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 COPY . .
-RUN npm run build
+RUN npm run format:check \
+  && npm run lint \
+  && npm run typecheck \
+  && npm test \
+  && npm run build
 
 FROM nginxinc/nginx-unprivileged:1.28-alpine
 
