@@ -27,7 +27,7 @@ tuples in 512-operation batches. The main thread applies bounded batches once pe
 
 The queue asks the worker to pause at a 24,000-operation high-water mark and resumes it at 8,000.
 Because one already-sent 512-operation batch may arrive at the boundary, its strict batch-bounded
-ceiling is 24,448 operations; the final profile peaked at 20,992. A new run terminates the old
+ceiling is 24,448 operations; the final profile peaked at 21,248. A new run terminates the old
 worker, stop responds immediately, route changes terminate work, and no unbounded event history is
 retained.
 
@@ -97,17 +97,17 @@ voice diagnostics. Results are local observations, not benchmark claims.
 
 | Algorithm        | Values | Wall time | Animation | Streamed ops | Observed fps | Peak queue | Long tasks |
 | ---------------- | -----: | --------: | --------: | -----------: | -----------: | ---------: | ---------: |
-| Quick Sort Hoare |    256 |    285 ms |    200 ms |        3,138 |           37 |          0 | 1 / 159 ms |
-| Quick Sort Hoare |  1,024 |    173 ms |    100 ms |       14,954 |           54 |      7,530 |          0 |
-| Quick Sort Hoare |  4,096 |    510 ms |    400 ms |       74,808 |           55 |     14,464 |          0 |
-| Merge Sort       |  4,096 |    511 ms |    500 ms |       87,485 |           60 |      8,320 |          0 |
-| Heap Sort        |  4,096 |    765 ms |    700 ms |      130,690 |           60 |     20,992 |          0 |
-| Radix Sort LSD   |  4,096 |     92 ms |      0 ms |        8,192 |           56 |      4,992 |          0 |
-| Optimized Bubble |    256 |    631 ms |    300 ms |       49,605 |           58 |          0 |          0 |
+| Quick Sort Hoare |    256 |    430 ms |    300 ms |        3,348 |           28 |          0 | 1 / 278 ms |
+| Quick Sort Hoare |  1,024 |    185 ms |    100 ms |       16,775 |           52 |          0 |          0 |
+| Quick Sort Hoare |  4,096 |    515 ms |    400 ms |       74,466 |           55 |     16,866 |          0 |
+| Merge Sort       |  4,096 |    532 ms |    500 ms |       87,391 |           58 |     20,864 |          0 |
+| Heap Sort        |  4,096 |    765 ms |    700 ms |      130,466 |           60 |     21,248 |          0 |
+| Radix Sort LSD   |  4,096 |    104 ms |      0 ms |        8,192 |           59 |          0 |          0 |
+| Optimized Bubble |    256 |    654 ms |    300 ms |       48,947 |           54 |          0 |          0 |
 
-The first 159 ms long task occurred during initial page/audio setup; subsequent measured sorting
-runs recorded no long task. Measured stop latency was 28 ms. Peak sampled heap growth at 4,096 was
-about 10.83 MB for Heap Sort, with other 4,096 runs lower. Active audio voices stayed at or below
+The first 278 ms long task occurred during initial page/audio setup; subsequent measured sorting
+runs recorded no long task. Measured stop latency was 45 ms. Peak sampled heap growth at 4,096 was
+about 20.09 MB for Heap Sort, with other 4,096 runs lower. Active audio voices stayed at or below
 the configured 12-voice cap.
 
 ## Responsive layout

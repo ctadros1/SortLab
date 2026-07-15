@@ -96,6 +96,9 @@ test('Sandbox explains restrictions and keeps hidden controls recoverable', asyn
   await expect(page.getByRole('button', { name: 'Restore Sandbox controls' })).toBeVisible()
   await page.keyboard.press('h')
   await expect(page.locator('.sandbox-controls')).toBeVisible()
+  await page.getByRole('button', { name: 'Enter fullscreen' }).click()
+  const exitFullscreen = page.getByRole('button', { name: 'Exit fullscreen' })
+  if (await exitFullscreen.isVisible()) await exitFullscreen.click()
   assertNoConsoleErrors()
 })
 

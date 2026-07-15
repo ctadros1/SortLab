@@ -87,8 +87,12 @@ export function SandboxPage() {
   )
 
   const toggleFullscreen = useCallback(async () => {
-    if (!document.fullscreenElement) await rootRef.current?.requestFullscreen()
-    else await document.exitFullscreen()
+    try {
+      if (!document.fullscreenElement) await rootRef.current?.requestFullscreen()
+      else await document.exitFullscreen()
+    } catch {
+      setFullscreen(false)
+    }
   }, [])
 
   useEffect(() => {
