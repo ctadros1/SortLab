@@ -1,0 +1,45 @@
+# Architecture
+
+## System shape
+
+SortLab is a static React + TypeScript + Vite application. Sorting, playback, sound, comparison, catalog filtering, and benchmarks run entirely in the browser. There is no backend, API, database, account system, or telemetry.
+
+The production path is:
+
+1. Node builds immutable hashed frontend assets.
+2. Unprivileged Nginx serves the assets and SPA fallback.
+3. Docker Compose binds only the dev-lab LAN IP and port.
+4. Arcane discovers and manages the on-disk Compose project.
+
+## Module boundaries
+
+- `src/algorithms/engine.ts`: generator implementations, event snapshots, counters, and final correctness guard.
+- `src/algorithms/registry.ts`: the single typed source for algorithm names, families, complexity, traits, restrictions, education, warnings, and pseudocode.
+- `src/hooks/useSortPlayer.ts`: event materialization, requestAnimationFrame playback, batching, sound density, status, and history navigation.
+- `src/components/BarVisualizer.tsx`: value-height mapping, patterns, markers, state legend, numeric-label density, and accessible narration.
+- `src/audio/audio.ts`: lazy Web Audio initialization, frequency mapping, short envelopes, cleanup, and completion tones.
+- `src/benchmark/benchmark.worker.ts`: identical copied arrays, warm-up, timed trials, medians, skip rules, and cooperative cancellation checkpoints.
+- `src/components/*Page.tsx`: Visualize, Compare, Learn, and Benchmark product surfaces.
+
+## Event and history model
+
+Each generator owns a copied working array and yields a discriminated `SortEvent`. Events contain an immutable array snapshot, affected indices, pseudocode line ID, deterministic narration, phase, cumulative counters, and optional active range.
+
+The player materializes the stream only after validation and caps it at 250,000 events. This trades memory for exact, instant previous/next/jump behavior at educational visualization sizes. Large benchmark inputs never use this history path.
+
+## Rendering and performance
+
+- `requestAnimationFrame` drives animation.
+- High playback speeds batch up to 16 events per frame.
+- React state stores only the event index and bounded stream; derived array/status values are not duplicated.
+- Labels automatically disappear on dense mobile visualizations.
+- Benchmark work is isolated in a Worker and yields between trials so cancellation messages can be processed.
+- Audio nodes are short-lived and disconnected on completion; tone density is throttled above 30 steps per second.
+
+## Accessibility
+
+Controls use semantic buttons, labels, inputs, tables, headings, and regions. Visual states combine color with hatching, borders, markers, and narration. The active pseudocode line has a non-color border and screen-reader text. Keyboard focus remains visible. `prefers-reduced-motion` disables transition duration while retaining discrete state changes. The mobile navigation is keyboard accessible and all core buttons meet the intended touch size.
+
+## Security
+
+Nginx provides CSP, frame denial, content-type protection, a restrictive permissions policy, no-referrer policy, immutable hashed-asset caching, and no-store HTML. Compose runs a non-root process with no capabilities, no new privileges, a read-only filesystem, no Docker socket or host mounts, and no outbound network on the internal bridge.
