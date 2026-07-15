@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { algorithmImplementations, materializeEvents } from '../algorithms/engine'
 import { algorithmRegistry, validateAlgorithmInput } from '../algorithms/registry'
-import { valueToFrequency } from '../audio/audio'
+import { valueToFrequency } from '../audio/frequencyMapping'
 import { CancellationToken } from '../benchmark/control'
 import { clampStep, resetPlayback, togglePlayback } from '../playback/state'
 import { generateArray, isSorted, parseCustomInput, sameMultiset } from '../utils/array'
@@ -108,8 +108,8 @@ describe('inputs, playback, benchmark cancellation, and audio', () => {
   })
 
   it('maps values into a controlled musical range', () => {
-    expect(valueToFrequency(0, 0, 100)).toBeCloseTo(180)
-    expect(valueToFrequency(100, 0, 100)).toBeCloseTo(880)
-    expect(valueToFrequency(50, 50, 50)).toBe(440)
+    expect(valueToFrequency(0, 0, 100)).toBeCloseTo(120)
+    expect(valueToFrequency(100, 0, 100)).toBeCloseTo(1212)
+    expect(valueToFrequency(50, 50, 50)).toBeCloseTo(666)
   })
 })

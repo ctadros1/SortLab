@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { materializeEvents } from '../algorithms/engine'
-import { playCompletion, playTone } from '../audio/audio'
+import { sortingAudioEngine } from '../audio/AudioEngine'
+import { loadVisualizeAudioPreferences, saveVisualizeAudioPreferences } from '../audio/preferences'
+import { createAudioSettings } from '../audio/presets'
 import { clampStep } from '../playback/state'
+import type { SoundPresetId } from '../audio/audioTypes'
 import type { PlaybackStatus, SortEvent } from '../types'
 
 export function useSortPlayer(initialArray: number[], initialAlgorithm: string) {
@@ -11,16 +14,30 @@ export function useSortPlayer(initialArray: number[], initialAlgorithm: string) 
   const [eventIndex, setEventIndex] = useState(-1)
   const [status, setStatus] = useState<PlaybackStatus>('idle')
   const [speed, setSpeed] = useState(12)
-  const [sound, setSound] = useState(true)
-  const [volume, setVolume] = useState(0.35)
+  const [audioPreferences, setAudioPreferences] = useState(() =>
+    loadVisualizeAudioPreferences(typeof localStorage === 'undefined' ? undefined : localStorage),
+  )
   const [executionMs, setExecutionMs] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const speedRef = useRef(speed)
-  const lastToneRef = useRef(0)
+  const sound = audioPreferences.enabled
+  const volume = audioPreferences.volume
+  const soundPreset = audioPreferences.preset
 
   useEffect(() => {
     speedRef.current = speed
   }, [speed])
+
+  useEffect(() => {
+    sortingAudioEngine.configure(createAudioSettings(soundPreset, { enabled: sound, volume }))
+    saveVisualizeAudioPreferences(
+      audioPreferences,
+      typeof localStorage === 'undefined' ? undefined : localStorage,
+    )
+    if (!sound) sortingAudioEngine.stopAll()
+  }, [audioPreferences, sound, soundPreset, volume])
+
+  useEffect(() => () => sortingAudioEngine.stopAll(), [])
 
   const prepare = useCallback(() => {
     try {
@@ -38,13 +55,14 @@ export function useSortPlayer(initialArray: number[], initialAlgorithm: string) 
   }, [algorithmId, source])
 
   const play = useCallback(() => {
+    if (sound) void sortingAudioEngine.resume()
     let available = events
     if (available.length === 0 || status === 'idle') {
       available = prepare() ?? []
       setEventIndex(-1)
     }
     if (available.length > 0) setStatus('running')
-  }, [events, prepare, status])
+  }, [events, prepare, sound, status])
 
   useEffect(() => {
     if (status !== 'running') return
@@ -69,31 +87,40 @@ export function useSortPlayer(initialArray: number[], initialAlgorithm: string) 
   useEffect(() => {
     if (eventIndex < 0 || !events[eventIndex]) return
     const event = events[eventIndex]
-    if (sound && ['compare', 'swap', 'write'].includes(event.type)) {
-      const now = performance.now()
-      const minimumGap = speed > 30 ? 90 : 25
-      if (now - lastToneRef.current >= minimumGap) {
-        const value = event.array[event.indices[0] ?? 0] ?? 0
-        void playTone(value, event.array, volume, event.type)
-        lastToneRef.current = now
-      }
+    if (sound && ['compare', 'swap', 'write', 'pivot'].includes(event.type)) {
+      const values = event.indices
+        .slice(0, 2)
+        .map((index) => event.array[index])
+        .filter((value): value is number => Number.isFinite(value))
+      void sortingAudioEngine.play({
+        type: event.type,
+        values,
+        dataset: event.array,
+        speed,
+        sequence: eventIndex,
+      })
     }
     if (eventIndex === events.length - 1 && status === 'running') {
       const timer = window.setTimeout(() => {
         setStatus('complete')
-        if (sound) void playCompletion(volume)
+        if (sound) void sortingAudioEngine.playCompletion(event.array, speed)
       }, 0)
       return () => window.clearTimeout(timer)
     }
-  }, [eventIndex, events, sound, speed, status, volume])
+  }, [eventIndex, events, sound, speed, status])
 
-  const pause = () => setStatus('paused')
+  const pause = () => {
+    sortingAudioEngine.stopAll()
+    setStatus('paused')
+  }
   const stop = () => {
+    sortingAudioEngine.stopAll()
     setStatus('idle')
     setEvents([])
     setEventIndex(-1)
   }
   const reset = () => {
+    sortingAudioEngine.stopAll()
     setStatus('idle')
     setEvents([])
     setEventIndex(-1)
@@ -115,6 +142,7 @@ export function useSortPlayer(initialArray: number[], initialAlgorithm: string) 
   }
 
   const replaceSource = (next: number[]) => {
+    sortingAudioEngine.stopAll()
     setSource(next)
     setEvents([])
     setEventIndex(-1)
@@ -123,12 +151,24 @@ export function useSortPlayer(initialArray: number[], initialAlgorithm: string) 
   }
 
   const selectAlgorithm = (id: string) => {
+    sortingAudioEngine.stopAll()
     setAlgorithmId(id)
     setEvents([])
     setEventIndex(-1)
     setStatus('idle')
     setError(null)
   }
+
+  const setSound = (enabled: boolean) => {
+    setAudioPreferences((current) => ({ ...current, enabled }))
+    if (enabled) void sortingAudioEngine.resume()
+  }
+
+  const setVolume = (nextVolume: number) =>
+    setAudioPreferences((current) => ({ ...current, volume: nextVolume }))
+
+  const setSoundPreset = (preset: SoundPresetId) =>
+    setAudioPreferences((current) => ({ ...current, preset }))
 
   const currentEvent = eventIndex >= 0 ? events[eventIndex] : undefined
   const array = currentEvent?.array ?? source
@@ -147,6 +187,7 @@ export function useSortPlayer(initialArray: number[], initialAlgorithm: string) 
     speed,
     sound,
     volume,
+    soundPreset,
     executionMs,
     error,
     progress,
@@ -155,6 +196,7 @@ export function useSortPlayer(initialArray: number[], initialAlgorithm: string) 
     setSpeed,
     setSound,
     setVolume,
+    setSoundPreset,
     play,
     pause,
     stop,
