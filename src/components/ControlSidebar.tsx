@@ -1,6 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { useSortPlayer } from '../hooks/useSortPlayer'
 import type { DatasetMode } from '../types'
+import { soundPresetList } from '../audio/presets'
+import type { SoundPresetId } from '../audio/audioTypes'
 import { AlgorithmPicker } from './AlgorithmPicker'
 import { DatasetPicker } from './DatasetPicker'
 import { AppIcon } from './Icon'
@@ -223,6 +225,21 @@ export function ControlSidebar({
             onChange={(event) => player.setVolume(Number(event.target.value))}
             disabled={!player.sound}
           />
+        </label>
+        <label className="control-field audio-preset-field">
+          <ControlLabel>Preset</ControlLabel>
+          <select
+            value={player.soundPreset}
+            onChange={(event) => player.setSoundPreset(event.target.value as SoundPresetId)}
+            disabled={!player.sound}
+            aria-label="Sound preset"
+          >
+            {soundPresetList.map((preset) => (
+              <option value={preset.id} key={preset.id}>
+                {preset.name}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 
