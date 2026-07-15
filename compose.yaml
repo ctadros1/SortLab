@@ -1,0 +1,42 @@
+name: sorting-playground
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${IMAGE_NAME:-sorting-playground}:${IMAGE_TAG:-1.0.0}
+    container_name: sorting-playground
+    ports:
+      - '${HOST_IP:-192.168.75.59}:${HOST_PORT:-8787}:8080'
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,uid=101,gid=101
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:8080/healthz']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+    labels:
+      com.sortlab.project: sorting-playground
+      com.sortlab.description: Educational sorting algorithm playground
+      com.sortlab.managed-by: arcane
+    networks:
+      - sorting-playground
+
+networks:
+  sorting-playground:
+    name: sorting-playground
+    driver: bridge
+    internal: true
