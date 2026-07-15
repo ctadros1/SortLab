@@ -1,6 +1,6 @@
 import type { SortEvent } from '../types'
 import { getBarDisplayRules, markerKindForEvent, type MarkerKind } from '../ui/visualizer'
-import { AppIcon, Diamond, MoveHorizontal } from './Icon'
+import { AppIcon, Diamond } from './Icon'
 
 interface Props {
   values: number[]
@@ -11,8 +11,7 @@ interface Props {
 
 function MarkerIcon({ kind }: { kind: MarkerKind }) {
   if (kind === 'pivot') return <Diamond aria-hidden="true" size={14} />
-  if (kind === 'range') return <MoveHorizontal aria-hidden="true" size={15} />
-  if (kind === 'compare') return <AppIcon name="activity" aria-hidden="true" size={14} />
+  if (kind === 'compare') return <AppIcon name="compare" aria-hidden="true" size={14} />
   if (kind === 'swap') return <AppIcon name="swap" aria-hidden="true" size={14} />
   if (kind === 'select') return <AppIcon name="algorithm" aria-hidden="true" size={14} />
   if (kind === 'write') return <AppIcon name="write" aria-hidden="true" size={14} />
@@ -47,9 +46,6 @@ export function BarVisualizer({
       {values.map((value, index) => {
         const height = 7 + ((value - minimum) / span) * 73
         const isActive = active.has(index)
-        const isRangeBoundary =
-          Boolean(event?.activeRange) &&
-          (index === event?.activeRange?.[0] || index === event?.activeRange?.[1])
         const isSorted = event?.type === 'markSorted' && isActive
         const state = isSorted
           ? 'sorted'
@@ -61,12 +57,9 @@ export function BarVisualizer({
                 : event?.type === 'markSorted'
                   ? 'sorted'
                   : (event?.type ?? 'default')
-            : event?.activeRange && index >= event.activeRange[0] && index <= event.activeRange[1]
-              ? 'range'
-              : 'default'
+            : 'default'
         const markers: MarkerKind[] = []
         if (isActive && eventMarker) markers.push(eventMarker)
-        if (isRangeBoundary && eventMarker !== 'range') markers.push('range')
         return (
           <div className="bar-slot" data-state={state} key={`${index}-${value}`}>
             <span
@@ -98,7 +91,6 @@ const legendStates: Array<[MarkerKind, string]> = [
   ['pivot', 'Pivot'],
   ['select', 'Selected minimum'],
   ['write', 'Current write'],
-  ['range', 'Active boundary'],
   ['sorted', 'Sorted'],
 ]
 
@@ -107,9 +99,10 @@ export function VisualLegend() {
     <div className="legend" aria-label="Visualization state legend">
       {legendStates.map(([state, label]) => (
         <span className="legend-item" key={state}>
-          <i className={`legend-swatch sort-bar--${state}`} aria-hidden="true" />
-          <MarkerIcon kind={state} />
           {label}
+          <i className={`legend-marker bar-marker--${state}`} aria-hidden="true">
+            <MarkerIcon kind={state} />
+          </i>
         </span>
       ))}
     </div>

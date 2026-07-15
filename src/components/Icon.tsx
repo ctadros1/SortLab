@@ -67,6 +67,7 @@ import type { AlgorithmIconId, DatasetIconId } from '../types'
 
 export type AppIconName =
   | 'activity'
+  | 'auxiliary'
   | 'algorithm'
   | 'audio'
   | 'benchmark'
@@ -76,6 +77,7 @@ export type AppIconName =
   | 'compare'
   | 'complexity'
   | 'dataset'
+  | 'depth'
   | 'end'
   | 'explain'
   | 'generate'
@@ -90,6 +92,8 @@ export type AppIconName =
   | 'pause'
   | 'play'
   | 'previous'
+  | 'phase'
+  | 'reads'
   | 'reset'
   | 'restore'
   | 'fullscreen'
@@ -107,6 +111,7 @@ export type AppIconName =
   | 'sun'
   | 'swap'
   | 'theme'
+  | 'timer'
   | 'volume'
   | 'warning'
   | 'write'
@@ -114,6 +119,7 @@ export type AppIconName =
 
 const appIcons: Record<AppIconName, LucideIcon> = {
   activity: Activity,
+  auxiliary: Settings2,
   algorithm: Braces,
   audio: Headphones,
   benchmark: BarChart3,
@@ -123,6 +129,7 @@ const appIcons: Record<AppIconName, LucideIcon> = {
   compare: GitCompareArrows,
   complexity: Scale,
   dataset: Database,
+  depth: Layers3,
   end: SkipForward,
   explain: Lightbulb,
   generate: RefreshCcw,
@@ -137,6 +144,8 @@ const appIcons: Record<AppIconName, LucideIcon> = {
   pause: Pause,
   play: Play,
   previous: StepBack,
+  phase: Flag,
+  reads: Eye,
   reset: RotateCcw,
   restore: Eye,
   fullscreen: Maximize2,
@@ -149,11 +158,12 @@ const appIcons: Record<AppIconName, LucideIcon> = {
   size: Grid3X3,
   sound: Volume2,
   speed: CircleGauge,
-  steps: Activity,
+  steps: ListOrdered,
   stop: Square,
   sun: Sun,
-  swap: ArrowLeftRight,
+  swap: ArrowRightLeft,
   theme: SlidersHorizontal,
+  timer: CircleGauge,
   volume: AudioLines,
   warning: TriangleAlert,
   write: PencilLine,

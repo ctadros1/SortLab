@@ -1,6 +1,6 @@
 import type { SortEventType } from '../types'
 
-export type MarkerKind = 'compare' | 'swap' | 'pivot' | 'sorted' | 'select' | 'write' | 'range'
+export type MarkerKind = 'compare' | 'swap' | 'pivot' | 'sorted' | 'select' | 'write'
 
 export function getBarDisplayRules(count: number, compact = false, viewportWidth = 1200) {
   return {
@@ -18,7 +18,6 @@ export function markerKindForEvent(type: SortEventType): MarkerKind | null {
   if (type === 'markSorted') return 'sorted'
   if (type === 'select') return 'select'
   if (type === 'write' || type === 'merge' || type === 'bucket') return 'write'
-  if (type === 'range' || type === 'heapify') return 'range'
   return null
 }
 

@@ -7,6 +7,7 @@ import { AlgorithmPicker } from './AlgorithmPicker'
 import { BarVisualizer, VisualLegend } from './BarVisualizer'
 import { CodePanel } from './CodePanel'
 import { ControlSidebar } from './ControlSidebar'
+import { EventProgress } from './EventProgress'
 import { AppIcon } from './Icon'
 import { StatsStrip } from './StatsStrip'
 
@@ -123,32 +124,12 @@ export function VisualizerPage() {
         ) : null}
         <BarVisualizer values={player.array} event={player.currentEvent} />
         <VisualLegend />
-        <div className="timeline-row">
-          <button className="text-button" onClick={() => player.jump('start')}>
-            <AppIcon name="beginning" aria-hidden="true" /> Beginning
-          </button>
-          <input
-            aria-label="Animation timeline"
-            type="range"
-            min="0"
-            max="100"
-            value={player.progress}
-            readOnly
-          />
-          <span>
-            {player.eventIndex + 1} / {player.events.length || 0}
-          </span>
-        </div>
+        <EventProgress current={player.eventIndex + 1} total={player.events.length} />
         <StatsStrip
           event={player.currentEvent}
           executionMs={player.executionMs}
           steps={player.eventIndex + 1}
         />
-        <p className="timing-note">
-          <AppIcon name="info" aria-hidden="true" /> Animation duration reflects event count and
-          playback speed. JavaScript execution time is measured separately and is not a production
-          benchmark.
-        </p>
       </section>
 
       <CodePanel algorithm={algorithm} event={player.currentEvent} />
