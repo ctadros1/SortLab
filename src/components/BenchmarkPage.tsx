@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { algorithmById, algorithmRegistry } from '../algorithms/registry'
 import { generateArray } from '../utils/array'
+import { AppIcon } from './Icon'
 
 interface Result {
   id: string
@@ -82,7 +83,7 @@ export function BenchmarkPage() {
   )
 
   return (
-    <main className="page-shell benchmark-page">
+    <main className="page-shell benchmark-page" id="main-content">
       <header className="page-intro">
         <div>
           <span className="section-label">Unanimated measurement</span>
@@ -156,16 +157,16 @@ export function BenchmarkPage() {
             />
           </label>
           {running ? (
-            <button className="button button--danger" onClick={cancel}>
-              Cancel benchmark
+            <button className="button button--danger button--with-icon" onClick={cancel}>
+              <AppIcon name="stop" aria-hidden="true" /> Cancel benchmark
             </button>
           ) : (
             <button
-              className="button button--primary"
+              className="button button--primary button--with-icon"
               onClick={run}
               disabled={selected.length === 0}
             >
-              Run benchmark
+              <AppIcon name="benchmark" aria-hidden="true" /> Run benchmark
             </button>
           )}
         </div>
@@ -213,9 +214,10 @@ export function BenchmarkPage() {
         )}
       </section>
       <div className="benchmark-caveat">
-        <strong>Interpret carefully.</strong> Browser version, device load, JIT compilation, garbage
-        collection, background activity, data distribution, and implementation details all affect
-        these results. They are observations—not universal rankings.
+        <AppIcon name="warning" aria-hidden="true" /> <strong>Interpret carefully.</strong> Browser
+        version, device load, JIT compilation, garbage collection, background activity, data
+        distribution, and implementation details all affect these results. They are observations—not
+        universal rankings.
       </div>
     </main>
   )

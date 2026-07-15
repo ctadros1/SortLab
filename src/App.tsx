@@ -3,6 +3,7 @@ import { BenchmarkPage } from './components/BenchmarkPage'
 import { ComparePage } from './components/ComparePage'
 import { LearnPage } from './components/LearnPage'
 import { VisualizerPage } from './components/VisualizerPage'
+import { AppIcon, type AppIconName } from './components/Icon'
 
 type Route = 'visualize' | 'compare' | 'learn' | 'benchmark'
 type Theme = 'light' | 'dark' | 'system'
@@ -13,6 +14,19 @@ const routeLabels: Record<Route, string> = {
   learn: 'Learn',
   benchmark: 'Benchmark',
 }
+
+const routeIcons: Record<Route, AppIconName> = {
+  visualize: 'activity',
+  compare: 'compare',
+  learn: 'learn',
+  benchmark: 'benchmark',
+}
+
+const themeOptions: Array<{ value: Theme; label: string; icon: AppIconName }> = [
+  { value: 'light', label: 'Light theme', icon: 'sun' },
+  { value: 'system', label: 'System theme', icon: 'monitor' },
+  { value: 'dark', label: 'Dark theme', icon: 'moon' },
+]
 
 export default function App() {
   const [route, setRoute] = useState<Route>('visualize')
@@ -39,6 +53,9 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <header className="topbar">
         <button
           className="mobile-menu"
@@ -46,9 +63,7 @@ export default function App() {
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
         >
-          <span />
-          <span />
-          <span />
+          <AppIcon name={menuOpen ? 'close' : 'menu'} aria-hidden="true" size={22} />
         </button>
         <button
           className="brand"
@@ -71,22 +86,25 @@ export default function App() {
               onClick={() => chooseRoute(item)}
               key={item}
             >
+              <AppIcon name={routeIcons[item]} aria-hidden="true" />
               {routeLabels[item]}
             </button>
           ))}
         </nav>
-        <label className="theme-control">
-          <span>Theme</span>
-          <select
-            aria-label="Color theme"
-            value={theme}
-            onChange={(event) => setTheme(event.target.value as Theme)}
-          >
-            <option value="system">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
+        <div className="theme-control" role="group" aria-label="Color theme">
+          {themeOptions.map((option) => (
+            <button
+              type="button"
+              aria-label={option.label}
+              aria-pressed={theme === option.value}
+              data-tooltip={option.label}
+              onClick={() => setTheme(option.value)}
+              key={option.value}
+            >
+              <AppIcon name={option.icon} aria-hidden="true" />
+            </button>
+          ))}
+        </div>
       </header>
       {route === 'visualize' ? <VisualizerPage /> : null}
       {route === 'compare' ? <ComparePage /> : null}

@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { materializeEvents } from '../algorithms/engine'
-import { algorithmById, algorithmRegistry, validateAlgorithmInput } from '../algorithms/registry'
+import { algorithmById, validateAlgorithmInput } from '../algorithms/registry'
 import type { SortEvent } from '../types'
 import { generateArray } from '../utils/array'
 import { BarVisualizer } from './BarVisualizer'
+import { AlgorithmPicker } from './AlgorithmPicker'
+import { AppIcon } from './Icon'
+import { Switch } from './Switch'
 
 interface Run {
   id: string
@@ -20,6 +23,7 @@ export function ComparePage() {
   const [seed, setSeed] = useState(42)
   const [speed, setSpeed] = useState(30)
   const [running, setRunning] = useState(false)
+  const [synchronized, setSynchronized] = useState(true)
   const [runs, setRuns] = useState<Run[]>([])
   const accumulator = useRef(0)
   const source = useMemo(() => generateArray('random', size, seed), [seed, size])
@@ -47,18 +51,25 @@ export function ComparePage() {
       const advance = Math.max(0, Math.min(16, Math.floor(accumulator.current / interval)))
       if (advance > 0) {
         accumulator.current -= advance * interval
-        setRuns((current) =>
-          current.map((run) => ({
+        setRuns((current) => {
+          const longest = Math.max(1, ...current.map((run) => run.events.length))
+          const sharedIndex = Math.max(0, ...current.map((run) => run.index)) + advance
+          return current.map((run) => ({
             ...run,
-            index: Math.min(run.events.length - 1, run.index + advance),
-          })),
-        )
+            index: synchronized
+              ? Math.min(
+                  run.events.length - 1,
+                  Math.floor((sharedIndex / longest) * run.events.length),
+                )
+              : Math.min(run.events.length - 1, run.index + advance),
+          }))
+        })
       }
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [running, speed])
+  }, [running, speed, synchronized])
 
   useEffect(() => {
     if (!running || runs.length === 0 || !runs.every((run) => run.index >= run.events.length - 1))
@@ -71,7 +82,7 @@ export function ComparePage() {
   const winner = completed ? [...runs].sort((a, b) => a.executionMs - b.executionMs)[0] : undefined
 
   return (
-    <main className="page-shell compare-page">
+    <main className="page-shell compare-page" id="main-content">
       <header className="page-intro">
         <div>
           <span className="section-label">Same input, different strategy</span>
@@ -83,34 +94,28 @@ export function ComparePage() {
         </p>
       </header>
       <section className="compare-controls" aria-label="Comparison configuration">
-        <label>
+        <div className="control-field">
           <span>First algorithm</span>
-          <select
+          <AlgorithmPicker
+            label="First algorithm"
             value={first}
-            onChange={(event) => setFirst(event.target.value)}
+            values={source}
+            onChange={setFirst}
             disabled={running}
-          >
-            {algorithmRegistry.map((item) => (
-              <option value={item.id} key={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
+            prominent={false}
+          />
+        </div>
+        <div className="control-field">
           <span>Second algorithm</span>
-          <select
+          <AlgorithmPicker
+            label="Second algorithm"
             value={second}
-            onChange={(event) => setSecond(event.target.value)}
+            values={source}
+            onChange={setSecond}
             disabled={running}
-          >
-            {algorithmRegistry.map((item) => (
-              <option value={item.id} key={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            prominent={false}
+          />
+        </div>
         <label>
           <span>Array size</span>
           <input
@@ -143,17 +148,29 @@ export function ComparePage() {
             onChange={(event) => setSpeed(Number(event.target.value))}
           />
         </label>
-        <button className="button button--primary" onClick={prepare} disabled={running}>
-          Start together
+        <Switch
+          checked={synchronized}
+          onChange={setSynchronized}
+          label="Synchronized playback"
+          description="Keep both panels at the same relative progress"
+          icon={<AppIcon name="compare" />}
+          disabled={running}
+        />
+        <button
+          className="button button--primary button--with-icon"
+          onClick={prepare}
+          disabled={running}
+        >
+          <AppIcon name="play" aria-hidden="true" /> Start together
         </button>
         <button
-          className="button button--secondary"
+          className="button button--secondary button--with-icon"
           onClick={() => {
             setRuns([])
             setRunning(false)
           }}
         >
-          Reset both
+          <AppIcon name="reset" aria-hidden="true" /> Reset both
         </button>
       </section>
       <section className="compare-grid">

@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import { algorithmRegistry, families } from '../algorithms/registry'
 import { ComplexityChart } from './ComplexityChart'
+import { AppIcon } from './Icon'
+import { MathNotation } from './MathNotation'
+import { Switch } from './Switch'
 
 export function LearnPage() {
   const [query, setQuery] = useState('')
@@ -34,7 +37,7 @@ export function LearnPage() {
   const detail = algorithmRegistry.find((item) => item.id === selected) ?? algorithmRegistry[0]
 
   return (
-    <main className="page-shell learn-page">
+    <main className="page-shell learn-page" id="main-content">
       <header className="page-intro">
         <div>
           <span className="section-label">Algorithm catalog</span>
@@ -72,22 +75,18 @@ export function LearnPage() {
             <option value="distribution">Non-comparison sorts</option>
           </select>
         </label>
-        <label className="switch-row">
-          <input
-            type="checkbox"
-            checked={stableOnly}
-            onChange={(event) => setStableOnly(event.target.checked)}
-          />
-          <span>Stable only</span>
-        </label>
-        <label className="switch-row">
-          <input
-            type="checkbox"
-            checked={inPlaceOnly}
-            onChange={(event) => setInPlaceOnly(event.target.checked)}
-          />
-          <span>In-place only</span>
-        </label>
+        <Switch
+          checked={stableOnly}
+          onChange={setStableOnly}
+          label="Stable only"
+          icon={<AppIcon name="check" />}
+        />
+        <Switch
+          checked={inPlaceOnly}
+          onChange={setInPlaceOnly}
+          label="In-place only"
+          icon={<AppIcon name="activity" />}
+        />
       </section>
       <div className="catalog-layout">
         <section className="table-wrap" aria-label="Interactive sorting algorithm comparison table">
@@ -123,10 +122,18 @@ export function LearnPage() {
                     <button onClick={() => setSelected(algorithm.id)}>{algorithm.name}</button>
                   </th>
                   <td>{algorithm.family}</td>
-                  <td>{algorithm.complexity.best}</td>
-                  <td>{algorithm.complexity.average}</td>
-                  <td>{algorithm.complexity.worst}</td>
-                  <td>{algorithm.complexity.space}</td>
+                  <td>
+                    <MathNotation value={algorithm.complexity.best} />
+                  </td>
+                  <td>
+                    <MathNotation value={algorithm.complexity.average} />
+                  </td>
+                  <td>
+                    <MathNotation value={algorithm.complexity.worst} />
+                  </td>
+                  <td>
+                    <MathNotation value={algorithm.complexity.space} />
+                  </td>
                   <td>{algorithm.stable ? 'Yes' : 'No'}</td>
                   <td>{algorithm.inPlace ? 'Yes' : 'No'}</td>
                   <td>{algorithm.adaptive ? 'Yes' : 'No'}</td>

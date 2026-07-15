@@ -3,21 +3,12 @@ import { algorithmById, algorithmRegistry, validateAlgorithmInput } from '../alg
 import { useSortPlayer } from '../hooks/useSortPlayer'
 import type { DatasetMode } from '../types'
 import { generateArray, parseCustomInput } from '../utils/array'
+import { AlgorithmPicker } from './AlgorithmPicker'
 import { BarVisualizer, VisualLegend } from './BarVisualizer'
 import { CodePanel } from './CodePanel'
+import { ControlSidebar } from './ControlSidebar'
+import { AppIcon } from './Icon'
 import { StatsStrip } from './StatsStrip'
-
-const datasetLabels: Record<DatasetMode, string> = {
-  random: 'Random',
-  'nearly-sorted': 'Nearly sorted',
-  reversed: 'Reversed',
-  sorted: 'Already sorted',
-  'few-unique': 'Few unique values',
-  duplicates: 'Many duplicates',
-  sawtooth: 'Sawtooth',
-  groups: 'Shuffled groups',
-  custom: 'Custom input',
-}
 
 export function VisualizerPage() {
   const [mode, setMode] = useState<DatasetMode>('random')
@@ -52,7 +43,7 @@ export function VisualizerPage() {
     const handleKey = (event: KeyboardEvent) => {
       if (
         event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLSelectElement ||
+        event.target instanceof HTMLButtonElement ||
         event.target instanceof HTMLTextAreaElement
       )
         return
@@ -82,202 +73,61 @@ export function VisualizerPage() {
   }
 
   const narration =
-    player.currentEvent?.narration ?? `Choose an algorithm, inspect its idea, then press Start.`
+    player.currentEvent?.narration ?? 'Choose an algorithm, inspect its idea, then press Start.'
 
   return (
-    <main className="visualize-layout">
-      <aside className="control-rail" aria-label="Sorting controls">
-        <div className="mobile-control-title">Controls</div>
-        <label>
-          <span>Algorithm</span>
-          <select
-            value={player.algorithmId}
-            onChange={(event) => chooseAlgorithm(event.target.value)}
-            disabled={player.controlsLocked}
-          >
-            {algorithmRegistry.map((item) => (
-              <option value={item.id} key={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>Dataset</span>
-          <select
-            value={mode}
-            onChange={(event) => setMode(event.target.value as DatasetMode)}
-            disabled={player.controlsLocked}
-          >
-            {Object.entries(datasetLabels).map(([value, label]) => (
-              <option value={value} key={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {mode === 'custom' ? (
-          <label>
-            <span>Comma-separated integers</span>
-            <textarea
-              value={custom}
-              onChange={(event) => setCustom(event.target.value)}
-              disabled={player.controlsLocked}
-              rows={3}
-            />
-          </label>
-        ) : null}
-        <div className="field-row">
-          <label>
-            <span>Seed</span>
-            <input
-              type="number"
-              value={seed}
-              onChange={(event) => setSeed(Number(event.target.value))}
-              disabled={player.controlsLocked}
-            />
-          </label>
-          <label>
-            <span>Size</span>
-            <input
-              type="number"
-              min="5"
-              max="120"
-              value={size}
-              onChange={(event) => setSize(Number(event.target.value))}
-              disabled={player.controlsLocked || mode === 'custom'}
-            />
-          </label>
-        </div>
-        <button
-          className="button button--secondary"
-          onClick={() => regenerate()}
-          disabled={player.controlsLocked}
-        >
-          Generate array
-        </button>
-        <label className="range-label">
-          <span>
-            Speed <strong>{player.speed} steps/s</strong>
-          </span>
-          <input
-            type="range"
-            min="1"
-            max="120"
-            value={player.speed}
-            onChange={(event) => player.setSpeed(Number(event.target.value))}
-          />
-        </label>
-        <label className="switch-row">
-          <input
-            type="checkbox"
-            checked={sameArray}
-            onChange={(event) => setSameArray(event.target.checked)}
-          />
-          <span>Use same array</span>
-        </label>
-        <div className="playback-grid">
-          <button className="button button--secondary" onClick={player.reset}>
-            Reset
-          </button>
-          <button className="button button--secondary" onClick={() => player.jump('start')}>
-            Beginning
-          </button>
-          <button className="button button--secondary" onClick={() => player.step(-1)}>
-            Previous
-          </button>
-          {player.status === 'running' ? (
-            <button className="button button--primary" onClick={player.pause}>
-              Pause
-            </button>
-          ) : (
-            <button className="button button--primary" onClick={player.play}>
-              {player.status === 'paused' ? 'Resume' : 'Start'}
-            </button>
-          )}
-          <button className="button button--secondary" onClick={() => player.step(1)}>
-            Next
-          </button>
-          <button className="button button--secondary" onClick={() => player.jump('end')}>
-            End
-          </button>
-          <button
-            className="button button--danger"
-            onClick={player.stop}
-            disabled={player.status === 'idle'}
-          >
-            Stop
-          </button>
-          <button
-            className="button button--secondary"
-            onClick={() => regenerate(mode, size, sameArray ? seed : seed + 1)}
-          >
-            Shuffle
-          </button>
-        </div>
-        <label className="switch-row">
-          <input
-            type="checkbox"
-            checked={player.sound}
-            onChange={(event) => player.setSound(event.target.checked)}
-          />
-          <span>Sound</span>
-        </label>
-        <label className="range-label">
-          <span>
-            Volume <strong>{Math.round(player.volume * 100)}%</strong>
-          </span>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={player.volume}
-            onChange={(event) => player.setVolume(Number(event.target.value))}
-            disabled={!player.sound}
-          />
-        </label>
-        <details className="shortcut-help">
-          <summary>Keyboard shortcuts</summary>
-          <p>Space play/pause · ←/→ step · R reset · S shuffle · M mute · Esc stop</p>
-        </details>
-      </aside>
+    <main className="visualize-layout" id="main-content">
+      <ControlSidebar
+        player={player}
+        mode={mode}
+        setMode={setMode}
+        seed={seed}
+        setSeed={setSeed}
+        size={size}
+        setSize={setSize}
+        custom={custom}
+        setCustom={setCustom}
+        sameArray={sameArray}
+        setSameArray={setSameArray}
+        chooseAlgorithm={chooseAlgorithm}
+        regenerate={regenerate}
+      />
 
-      <section className="visual-stage" aria-live="polite">
-        <label className="mobile-algorithm-select">
-          <span>Algorithm</span>
-          <select
-            aria-label="Mobile algorithm"
+      <section className="visual-stage" aria-label="Sorting visualization workspace">
+        <div className="mobile-algorithm-picker">
+          <span className="control-label">
+            <AppIcon name="algorithm" aria-hidden="true" /> Algorithm
+          </span>
+          <AlgorithmPicker
+            label="Mobile algorithm"
             value={player.algorithmId}
-            onChange={(event) => chooseAlgorithm(event.target.value)}
+            values={player.source}
+            onChange={chooseAlgorithm}
             disabled={player.controlsLocked}
-          >
-            {algorithmRegistry.map((item) => (
-              <option value={item.id} key={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="narration">
-          <span aria-hidden="true">●</span>
+          />
+        </div>
+        <div className="narration" role="status" aria-live="polite">
+          <AppIcon name="narration" aria-hidden="true" />
           <strong>{narration}</strong>
         </div>
         {algorithm.warning ? (
           <div className="warning" role="note">
-            <strong>Safety limit:</strong> {algorithm.warning}
+            <AppIcon name="warning" aria-hidden="true" />
+            <span>
+              <strong>Safety limit:</strong> {algorithm.warning}
+            </span>
           </div>
         ) : null}
         {customError || player.error ? (
           <div className="error-message" role="alert">
-            {customError ?? player.error}
+            <AppIcon name="warning" aria-hidden="true" /> {customError ?? player.error}
           </div>
         ) : null}
         <BarVisualizer values={player.array} event={player.currentEvent} />
         <VisualLegend />
         <div className="timeline-row">
           <button className="text-button" onClick={() => player.jump('start')}>
-            Jump to beginning
+            <AppIcon name="beginning" aria-hidden="true" /> Beginning
           </button>
           <input
             aria-label="Animation timeline"
@@ -291,10 +141,15 @@ export function VisualizerPage() {
             {player.eventIndex + 1} / {player.events.length || 0}
           </span>
         </div>
-        <StatsStrip event={player.currentEvent} executionMs={player.executionMs} />
+        <StatsStrip
+          event={player.currentEvent}
+          executionMs={player.executionMs}
+          steps={player.eventIndex + 1}
+        />
         <p className="timing-note">
-          Animation duration reflects event count and playback speed. JavaScript execution time is
-          measured separately and is still not a production benchmark.
+          <AppIcon name="info" aria-hidden="true" /> Animation duration reflects event count and
+          playback speed. JavaScript execution time is measured separately and is not a production
+          benchmark.
         </p>
       </section>
 
