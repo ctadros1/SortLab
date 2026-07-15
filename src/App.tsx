@@ -10,6 +10,8 @@ import { AppIcon, type AppIconName } from './components/Icon'
 type Route = 'visualize' | 'sandbox' | 'compare' | 'learn' | 'benchmark'
 type Theme = 'light' | 'dark' | 'system'
 
+const routeOrder: Route[] = ['visualize', 'compare', 'learn', 'benchmark', 'sandbox']
+
 const routeLabels: Record<Route, string> = {
   visualize: 'Visualize',
   sandbox: 'Sandbox',
@@ -43,10 +45,18 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    const dark =
-      theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+    const systemTheme = matchMedia('(prefers-color-scheme: dark)')
+    const applyTheme = () => {
+      const dark = theme === 'dark' || (theme === 'system' && systemTheme.matches)
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+    }
+
+    applyTheme()
     localStorage.setItem('sortlab-theme', theme)
+    if (theme !== 'system') return
+
+    systemTheme.addEventListener('change', applyTheme)
+    return () => systemTheme.removeEventListener('change', applyTheme)
   }, [theme])
 
   useEffect(() => {
@@ -101,7 +111,7 @@ export default function App() {
           Sort<span>Lab</span>
         </button>
         <nav className={menuOpen ? 'is-open' : ''} aria-label="Primary navigation">
-          {(Object.keys(routeLabels) as Route[]).map((item) => (
+          {routeOrder.map((item) => (
             <button
               className={route === item ? 'is-active' : ''}
               aria-current={route === item ? 'page' : undefined}
@@ -113,13 +123,18 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <div className="theme-control" role="group" aria-label="Color theme">
+        <div
+          className="theme-control"
+          role="group"
+          aria-label="Color theme"
+          data-theme-index={themeOptions.findIndex((option) => option.value === theme)}
+        >
+          <span className="theme-control__indicator" aria-hidden="true" />
           {themeOptions.map((option) => (
             <button
               type="button"
               aria-label={option.label}
               aria-pressed={theme === option.value}
-              data-tooltip={option.label}
               onClick={() => setTheme(option.value)}
               key={option.value}
             >

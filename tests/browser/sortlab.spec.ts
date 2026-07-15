@@ -19,6 +19,71 @@ async function chooseVisualizeAlgorithm(page: Page, name: RegExp) {
   await page.getByRole('option', { name }).click()
 }
 
+test('Header theme indicator slides accessibly and Sandbox is last', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#visualize')
+
+  const navigation = page.getByRole('navigation', { name: 'Primary navigation' })
+  await expect(navigation.getByRole('button')).toHaveText([
+    'Visualize',
+    'Compare',
+    'Learn',
+    'Benchmark',
+    'Sandbox',
+  ])
+
+  const themeControl = page.getByRole('group', { name: 'Color theme' })
+  const indicator = themeControl.locator('.theme-control__indicator')
+  await expect(themeControl).toHaveText('')
+  await expect(themeControl.locator('[data-tooltip]')).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Light theme' }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('button', { name: 'Light theme' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await page.waitForTimeout(250)
+  const lightTransform = await indicator.evaluate((element) => getComputedStyle(element).transform)
+
+  await page.getByRole('button', { name: 'System theme' }).click()
+  await page.waitForTimeout(250)
+  const systemTransform = await indicator.evaluate((element) => getComputedStyle(element).transform)
+  expect(systemTransform).not.toBe(lightTransform)
+
+  await page.getByRole('button', { name: 'Dark theme' }).click()
+  await expect(page.getByRole('button', { name: 'Dark theme' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await page.waitForTimeout(250)
+  const darkTransform = await indicator.evaluate((element) => getComputedStyle(element).transform)
+  expect(darkTransform).not.toBe(systemTransform)
+
+  await page.getByRole('button', { name: 'System theme' }).click()
+  await page.waitForTimeout(250)
+  await expect(indicator).toHaveCSS('transform', systemTransform)
+  await page.getByRole('button', { name: 'Light theme' }).click()
+  await page.waitForTimeout(250)
+  await expect(indicator).toHaveCSS('transform', lightTransform)
+
+  await page.getByRole('button', { name: 'Sandbox' }).click()
+  await expect(page.getByRole('button', { name: 'Sandbox' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  )
+  assertNoConsoleErrors()
+})
+
+test('Theme indicator disables motion when reduced motion is requested', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/#visualize')
+  const duration = await page
+    .locator('.theme-control__indicator')
+    .evaluate((element) => Number.parseFloat(getComputedStyle(element).transitionDuration))
+  expect(duration).toBeLessThanOrEqual(0.001)
+})
+
 test('Visualize keeps sound controls intentionally simple', async ({ page }) => {
   const assertNoConsoleErrors = failOnConsoleErrors(page)
   await page.goto('/#visualize')
