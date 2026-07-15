@@ -1,0 +1,230 @@
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
+import { filterRichOptions, nextEnabledIndex, type RichOption } from '../ui/combobox'
+import { AppIcon, ChevronDown } from './Icon'
+
+interface Props<T extends RichOption> {
+  label: string
+  value: string
+  options: T[]
+  onChange: (value: string) => void
+  renderSelected: (option: T) => ReactNode
+  renderOption: (option: T, selected: boolean) => ReactNode
+  searchPlaceholder: string
+  disabled?: boolean
+  prominent?: boolean
+}
+
+export function RichCombobox<T extends RichOption>({
+  label,
+  value,
+  options,
+  onChange,
+  renderSelected,
+  renderOption,
+  searchPlaceholder,
+  disabled = false,
+  prominent = false,
+}: Props<T>) {
+  const id = useId().replace(/:/g, '')
+  const listboxId = `${id}-listbox`
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
+  const restoreFocusRef = useRef(false)
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const filtered = useMemo(() => filterRichOptions(options, query), [options, query])
+  const selected = options.find((option) => option.id === value) ?? options[0]
+  const selectedIndex = Math.max(
+    0,
+    filtered.findIndex((option) => option.id === value),
+  )
+  const [activeIndex, setActiveIndex] = useState(selectedIndex)
+  const firstEnabledIndex = filtered.findIndex((option) => !option.disabled)
+  const effectiveActiveIndex =
+    filtered[activeIndex] && !filtered[activeIndex].disabled ? activeIndex : firstEnabledIndex
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (event: PointerEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+        setQuery('')
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    window.setTimeout(() => searchRef.current?.focus(), 0)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [open])
+
+  useEffect(() => {
+    if (!open && restoreFocusRef.current) {
+      triggerRef.current?.focus()
+      restoreFocusRef.current = false
+    }
+  }, [open])
+
+  const close = (restoreFocus = true) => {
+    restoreFocusRef.current = restoreFocus
+    setOpen(false)
+    setQuery('')
+  }
+
+  const choose = (option: T) => {
+    if (option.disabled) return
+    onChange(option.id)
+    close()
+  }
+
+  const move = (direction: 1 | -1) => {
+    setActiveIndex((current) => nextEnabledIndex(filtered, current, direction))
+  }
+
+  const handleKeys = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      if (!open) setOpen(true)
+      else move(event.key === 'ArrowDown' ? 1 : -1)
+      return
+    }
+    if (event.key === 'Home' && open) {
+      event.preventDefault()
+      setActiveIndex(filtered.findIndex((option) => !option.disabled))
+      return
+    }
+    if (event.key === 'End' && open) {
+      event.preventDefault()
+      for (let index = filtered.length - 1; index >= 0; index -= 1) {
+        if (!filtered[index].disabled) {
+          setActiveIndex(index)
+          break
+        }
+      }
+      return
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      if (!open) setOpen(true)
+      else if (effectiveActiveIndex >= 0 && filtered[effectiveActiveIndex])
+        choose(filtered[effectiveActiveIndex])
+      return
+    }
+    if (event.key === 'Escape' && open) {
+      event.preventDefault()
+      close()
+      return
+    }
+    if (!open && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      setQuery(event.key)
+      setOpen(true)
+    }
+  }
+
+  const groups = [...new Set(filtered.map((option) => option.group))]
+  const activeOption = effectiveActiveIndex >= 0 ? filtered[effectiveActiveIndex] : undefined
+
+  return (
+    <div className={`rich-select ${prominent ? 'rich-select--prominent' : ''}`} ref={wrapperRef}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="rich-select__trigger"
+        role="combobox"
+        aria-label={label}
+        aria-controls={listboxId}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-activedescendant={open && activeOption ? `${id}-option-${activeOption.id}` : undefined}
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={handleKeys}
+      >
+        <span className="rich-select__selection">
+          {selected ? renderSelected(selected) : label}
+        </span>
+        <ChevronDown aria-hidden="true" size={18} />
+      </button>
+      {open ? (
+        <div className="rich-select__popover">
+          <label className="rich-select__search">
+            <AppIcon name="search" aria-hidden="true" />
+            <span className="sr-only">Search {label.toLowerCase()}</span>
+            <input
+              ref={searchRef}
+              type="search"
+              value={query}
+              placeholder={searchPlaceholder}
+              aria-controls={listboxId}
+              aria-activedescendant={activeOption ? `${id}-option-${activeOption.id}` : undefined}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={handleKeys}
+            />
+          </label>
+          <div className="rich-select__list" role="listbox" id={listboxId} aria-label={label}>
+            {groups.length === 0 ? (
+              <p className="rich-select__empty">No matching options.</p>
+            ) : (
+              groups.map((group) => (
+                <div
+                  className="rich-select__group"
+                  role="group"
+                  aria-labelledby={`${id}-group-${group.replace(/\W/g, '-')}`}
+                  key={group}
+                >
+                  <div
+                    className="rich-select__group-label"
+                    id={`${id}-group-${group.replace(/\W/g, '-')}`}
+                  >
+                    {group}
+                  </div>
+                  {filtered
+                    .filter((option) => option.group === group)
+                    .map((option) => {
+                      const index = filtered.indexOf(option)
+                      const isSelected = option.id === value
+                      const isActive = index === effectiveActiveIndex
+                      return (
+                        <button
+                          type="button"
+                          role="option"
+                          id={`${id}-option-${option.id}`}
+                          aria-selected={isSelected}
+                          aria-disabled={option.disabled || undefined}
+                          className={`rich-select__option ${isActive ? 'is-active' : ''}`}
+                          disabled={option.disabled}
+                          onPointerMove={() => setActiveIndex(index)}
+                          onClick={() => {
+                            if (option.disabled) return
+                            onChange(option.id)
+                            restoreFocusRef.current = true
+                            setOpen(false)
+                            setQuery('')
+                          }}
+                          key={option.id}
+                        >
+                          {renderOption(option, isSelected)}
+                          {option.disabledReason ? (
+                            <small className="rich-select__disabled-reason">
+                              {option.disabledReason}
+                            </small>
+                          ) : null}
+                        </button>
+                      )
+                    })}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
