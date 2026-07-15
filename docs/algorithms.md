@@ -2,6 +2,11 @@
 
 SortLab includes 36 algorithms organized into ten teaching families. The typed registry is authoritative for names, aliases, complexity, stability, in-place/adaptive traits, warnings, restrictions, size limits, pseudocode, and educational copy.
 
+The picker presents those families as Exchange sorts, Selection sorts, Insertion sorts, Merge
+sorts, Partition / quick sorts, Heap-based sorts, Distribution sorts, Network sorts, Hybrid sorts,
+and Novelty and impractical sorts. Search includes aliases and family terms, while the registry’s
+typed icon assignment keeps every option visually distinct without creating 36 unrelated styles.
+
 ## Complexity variables
 
 - `n`: number of input items.

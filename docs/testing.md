@@ -12,6 +12,11 @@ npm run build
 
 The Vitest suite iterates over every registry entry and verifies supported edge cases plus seeded randomized arrays. It independently checks ascending output and multiset preservation. Focused tests cover snapshot immutability, monotonic counters, metadata completeness, custom input errors, seeded generation, size/range restrictions, forward/back/reset transitions, benchmark cancellation state, and audio frequency bounds.
 
+The redesign suite additionally checks algorithm grouping, name/alias/family search, all 36 icon
+assignments, pathological warnings, all dataset previews, combobox filtering and disabled-option
+navigation, selected option rendering, switch state, semantic formula output, marker mapping, and
+responsive marker/value headroom rules.
+
 ## Browser interaction matrix
 
 Verify in the built application:
@@ -26,6 +31,10 @@ Verify in the built application:
 - Benchmark warm-up, results, skip warning, and cancellation.
 - Light, dark, and system themes.
 - 1440, 1024, 768, and 390 pixel widths with no horizontal overflow.
+- Algorithm and dataset picker grouping, search, Arrow/Home/End/Enter/Escape behavior, warnings,
+  focus restoration, and mobile popover containment.
+- Switch announcement, Start/Pause/Resume transitions, Pseudocode/Explain tabs, live active line,
+  semantic superscripts, and non-colliding active markers.
 
 ## Visual review ledger
 
@@ -41,3 +50,6 @@ The design references live in `docs/design/`. Compare the accepted desktop and m
 8. chart scales, titles, labels, caveats, and non-color distinction.
 
 IAB is the primary interaction runner. If its high-resolution screenshot capture is unreliable, use the installed local headless Chrome only for deterministic screenshot capture after IAB interactions have passed; do not substitute screenshot capture for functional testing.
+
+Accepted redesign captures are in `docs/design/after/`. Baseline captures are retained in
+`docs/design/before/` for direct density, hierarchy, marker, theme, and overflow comparison.

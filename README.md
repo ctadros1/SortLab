@@ -2,7 +2,11 @@
 
 SortLab is a local-first educational sorting algorithm playground for CS1 students. It turns algorithm execution into structured events so students can watch comparisons and writes, step backward and forward, hear value-mapped tones, connect each action to pseudocode, and compare algorithms without confusing animation speed with computational performance.
 
-![SortLab desktop interface](docs/design/sortlab-desktop-render.png)
+![SortLab desktop interface](docs/design/after/visualize-light-1440x1000.png)
+
+The interface uses an icon-led three-region workspace: compact controls on the left, the sorting
+canvas in the center, and a sticky algorithm guide on the right. At narrower widths the guide and
+controls continue below the canvas without changing the sorting behavior.
 
 ## LAN access
 
@@ -28,6 +32,31 @@ The service binds only to the dev-lab LAN address. It has no accounts, database,
 - Run cancellable, warm-up-based Web Worker benchmarks with identical copied inputs and median results.
 - Switch between light, dark, and system themes.
 
+## Pickers and controls
+
+The Algorithm and Dataset fields are searchable custom comboboxes rather than native browser
+menus. Use Up/Down Arrow to move, Home/End to jump, Enter to select, Escape to close, or begin
+typing while the field has focus. Focus returns to the trigger after the list closes.
+
+Algorithms are grouped as Exchange, Selection, Insertion, Merge, Partition / quick, Heap-based,
+Distribution, Network, Hybrid, and Novelty and impractical sorts. Each option includes its local
+Lucide motif, teaching description, family, important traits, complexity, and any safety warning.
+Search matches names, aliases, families, and teaching terms. Incompatible choices remain visible
+with their constraint explained.
+
+Datasets are grouped into generated data and custom input. Each option has a pattern icon, concise
+description, and six-bar preview. Binary preferences use accessible switches with visible on/off
+state; speed and volume remain labeled sliders. Playback uses labeled icon buttons, and the primary
+button changes from Start to Pause to Resume as the player state changes.
+
+## Algorithm guide
+
+The Pseudocode tab uses aligned line numbers, keyword styling, a single active-line marker, and a
+live explanation. The Explain tab summarizes the current phase and operation, invariant, key thing
+to notice, worked example, and common mistake. Complexity values use a shared semantic renderer
+with `<var>` and `<sup>` so notation such as O(n²), O(n log n), and O(d(n + b)) remains readable to
+assistive technology and in both themes.
+
 ## Keyboard shortcuts
 
 | Key         | Action                  |
@@ -40,7 +69,9 @@ The service binds only to the dev-lab LAN address. It has no accounts, database,
 | M           | Toggle sound            |
 | Escape      | Stop                    |
 
-Keyboard shortcuts do not fire while focus is inside an input, select, or textarea.
+Keyboard shortcuts do not fire while focus is inside an input, button, or textarea. Every icon-only
+theme action has an accessible name and tooltip; the page also includes a skip link, visible focus,
+tab semantics, labeled groups, screen-reader operation updates, and reduced-motion support.
 
 ## Supported algorithms
 
@@ -143,10 +174,21 @@ Never delete the current project before confirming the archive contents. Keep `.
 1. Implement a generator in `src/algorithms/engine.ts`. It must mutate only its local working copy and yield structured, snapshot-backed events with accurate counters, narration, phase, and `codeLine` identifiers.
 2. Add it to `algorithmImplementations` using a stable ID.
 3. Register exactly one centralized metadata entry in `src/algorithms/registry.ts` with complexity, traits, restrictions, size limits, pseudocode, explanations, use cases, disadvantages, comparisons, implementation notes, and common mistakes.
-4. Ensure every yielded `codeLine` maps to an appropriate pseudocode line or intentionally uses a documented generic operation.
-5. Add or adjust input validation in `validateAlgorithmInput`.
-6. Run the property-style catalog test and add focused tests for special constraints.
-7. Verify comparison mode, reverse stepping, narration, counters, patterns, dark/light themes, and mobile rendering.
+4. Assign one typed motif in `algorithmIconAssignments`. Reuse the small vocabulary in
+   `src/components/Icon.tsx`; do not introduce a one-off icon library or decorative illustration.
+5. Ensure every yielded `codeLine` maps to an appropriate pseudocode line or intentionally uses a documented generic operation.
+6. Add or adjust input validation in `validateAlgorithmInput`.
+7. Run the property-style catalog test and add focused tests for special constraints.
+8. Verify picker search, comparison mode, reverse stepping, narration, counters, patterns,
+   dark/light themes, and mobile rendering.
+
+## Adding a dataset
+
+1. Add one typed entry to `src/data/datasets.ts` with an ID, name, description, icon ID, six-value
+   preview, search terms, and any constraint copy.
+2. Add the generator branch in `src/utils/array.ts` when the dataset is generated rather than custom.
+3. Map any new motif in `src/components/Icon.tsx` and extend `DatasetIconId` in `src/types/index.ts`.
+4. Test metadata completeness, search, seeded output, picker keyboard selection, and the 390px layout.
 
 ## Troubleshooting
 

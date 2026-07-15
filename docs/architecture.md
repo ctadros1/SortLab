@@ -14,7 +14,13 @@ The production path is:
 ## Module boundaries
 
 - `src/algorithms/engine.ts`: generator implementations, event snapshots, counters, and final correctness guard.
-- `src/algorithms/registry.ts`: the single typed source for algorithm names, families, complexity, traits, restrictions, education, warnings, and pseudocode.
+- `src/algorithms/registry.ts`: the single typed source for algorithm names, aliases, families, icon assignments, picker copy, complexity, traits, restrictions, education, warnings, and pseudocode.
+- `src/data/datasets.ts`: typed dataset names, descriptions, icon assignments, miniature previews, constraints, and search terms.
+- `src/components/RichCombobox.tsx`: shared ARIA combobox/listbox behavior, keyboard movement, search, grouped options, outside-click close, and focus restoration.
+- `src/components/ControlSidebar.tsx`: selection, playback, audio, switch, slider, and help sections.
+- `src/components/Icon.tsx`: the single Lucide icon vocabulary for routes, actions, algorithms, and datasets.
+- `src/components/MathNotation.tsx`: semantic, accessible rendering of the registry’s bounded Big-O notation.
+- `src/components/CodePanel.tsx`: Pseudocode and Explain tabs, active-line state, complexity cells, and traits.
 - `src/hooks/useSortPlayer.ts`: event materialization, requestAnimationFrame playback, batching, sound density, status, and history navigation.
 - `src/components/BarVisualizer.tsx`: value-height mapping, patterns, markers, state legend, numeric-label density, and accessible narration.
 - `src/audio/audio.ts`: lazy Web Audio initialization, frequency mapping, short envelopes, cleanup, and completion tones.
@@ -38,7 +44,14 @@ The player materializes the stream only after validation and caps it at 250,000 
 
 ## Accessibility
 
-Controls use semantic buttons, labels, inputs, tables, headings, and regions. Visual states combine color with hatching, borders, markers, and narration. The active pseudocode line has a non-color border and screen-reader text. Keyboard focus remains visible. `prefers-reduced-motion` disables transition duration while retaining discrete state changes. The mobile navigation is keyboard accessible and all core buttons meet the intended touch size.
+Controls use semantic buttons, labels, inputs, tables, headings, regions, tabs, comboboxes,
+listboxes, labeled option groups, and switches. The custom pickers implement Arrow Up/Down,
+Home/End, Enter, Escape, type-to-search, outside-click closing, and focus restoration. Visual states
+combine color with hatching, borders, icons, labels, and narration. Bar geometry reserves separate
+marker and value headroom. The active pseudocode line has a non-color pointer, border, and
+screen-reader text. Formulas expose plain-language labels. Keyboard focus remains visible, a skip
+link reaches the active main surface, and `prefers-reduced-motion` disables transition duration
+while retaining discrete state changes. Core mobile actions are at least 44 pixels tall.
 
 ## Security
 
