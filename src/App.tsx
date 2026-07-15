@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
+import { sortingAudioEngine } from './audio/AudioEngine'
 import { BenchmarkPage } from './components/BenchmarkPage'
 import { ComparePage } from './components/ComparePage'
 import { LearnPage } from './components/LearnPage'
 import { VisualizerPage } from './components/VisualizerPage'
+import { SandboxPage } from './components/SandboxPage'
 import { AppIcon, type AppIconName } from './components/Icon'
 
-type Route = 'visualize' | 'compare' | 'learn' | 'benchmark'
+type Route = 'visualize' | 'sandbox' | 'compare' | 'learn' | 'benchmark'
 type Theme = 'light' | 'dark' | 'system'
 
 const routeLabels: Record<Route, string> = {
   visualize: 'Visualize',
+  sandbox: 'Sandbox',
   compare: 'Compare',
   learn: 'Learn',
   benchmark: 'Benchmark',
@@ -17,6 +20,7 @@ const routeLabels: Record<Route, string> = {
 
 const routeIcons: Record<Route, AppIconName> = {
   visualize: 'activity',
+  sandbox: 'sandbox',
   compare: 'compare',
   learn: 'learn',
   benchmark: 'benchmark',
@@ -29,7 +33,10 @@ const themeOptions: Array<{ value: Theme; label: string; icon: AppIconName }> = 
 ]
 
 export default function App() {
-  const [route, setRoute] = useState<Route>('visualize')
+  const [route, setRoute] = useState<Route>(() => {
+    const hash = window.location.hash.slice(1)
+    return hash in routeLabels ? (hash as Route) : 'visualize'
+  })
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem('sortlab-theme') as Theme) || 'system',
   )
@@ -42,8 +49,23 @@ export default function App() {
     localStorage.setItem('sortlab-theme', theme)
   }, [theme])
 
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash.slice(1)
+      if (hash in routeLabels) {
+        sortingAudioEngine.stopAll()
+        setRoute(hash as Route)
+        setMenuOpen(false)
+      }
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
   const chooseRoute = (next: Route) => {
+    sortingAudioEngine.stopAll()
     setRoute(next)
+    window.history.pushState(null, '', `#${next}`)
     setMenuOpen(false)
     window.scrollTo({
       top: 0,
@@ -107,16 +129,19 @@ export default function App() {
         </div>
       </header>
       {route === 'visualize' ? <VisualizerPage /> : null}
+      {route === 'sandbox' ? <SandboxPage /> : null}
       {route === 'compare' ? <ComparePage /> : null}
       {route === 'learn' ? <LearnPage /> : null}
       {route === 'benchmark' ? <BenchmarkPage /> : null}
-      <footer className="app-footer">
-        <strong>SortLab</strong>
-        <span>
-          A local-first teaching tool. No accounts, analytics, trackers, external fonts, or uploaded
-          data.
-        </span>
-      </footer>
+      {route !== 'sandbox' ? (
+        <footer className="app-footer">
+          <strong>SortLab</strong>
+          <span>
+            A local-first teaching tool. No accounts, analytics, trackers, external fonts, or
+            uploaded data.
+          </span>
+        </footer>
+      ) : null}
     </div>
   )
 }

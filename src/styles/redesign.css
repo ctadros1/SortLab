@@ -1332,6 +1332,10 @@ input[type='range'] {
     height: 30px;
   }
 
+  [data-tooltip]::after {
+    display: none;
+  }
+
   .visual-stage {
     padding: 16px 12px 22px;
   }

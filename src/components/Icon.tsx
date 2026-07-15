@@ -31,6 +31,9 @@ import {
   Lightbulb,
   ListFilter,
   ListOrdered,
+  Eye,
+  EyeOff,
+  Maximize2,
   Monitor,
   Menu,
   Moon,
@@ -88,6 +91,10 @@ export type AppIconName =
   | 'play'
   | 'previous'
   | 'reset'
+  | 'restore'
+  | 'fullscreen'
+  | 'hide'
+  | 'sandbox'
   | 'search'
   | 'seed'
   | 'settings'
@@ -131,6 +138,10 @@ const appIcons: Record<AppIconName, LucideIcon> = {
   play: Play,
   previous: StepBack,
   reset: RotateCcw,
+  restore: Eye,
+  fullscreen: Maximize2,
+  hide: EyeOff,
+  sandbox: SlidersHorizontal,
   search: Search,
   seed: Hash,
   settings: Settings2,
