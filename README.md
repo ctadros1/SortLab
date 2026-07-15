@@ -8,6 +8,11 @@ The interface uses an icon-led three-region workspace: compact controls on the l
 canvas in the center, and a sticky algorithm guide on the right. At narrower widths the guide and
 controls continue below the canvas without changing the sorting behavior.
 
+Sandbox is a separate high-scale Canvas experience for cinematic, worker-driven runs with up to
+4,096 values and advanced sound and rendering controls.
+
+![SortLab Sandbox](docs/design/after/sandbox-default-1440x1000.png)
+
 ## LAN access
 
 - URL: `http://192.168.75.59:8787`
@@ -25,7 +30,11 @@ The service binds only to the dev-lab LAN address. It has no accounts, database,
 - Reproduce an array with a seed and reuse it across comparisons.
 - Start, pause, resume, stop, reset, step backward, step forward, and jump to either end.
 - Change speed while a run is active.
-- Enable value-mapped Web Audio tones and lower the volume; dense high-speed runs automatically reduce tone frequency.
+- Enable a clean-room Web Audio audibilization engine with value-mapped pitch, bounded polyphony,
+  click-free envelopes, automatic gain normalization, and adaptive density.
+- Keep Visualize focused with only Sound, Volume, and Classic / Soft / Minimal presets.
+- Open Sandbox for 64–4,096 Canvas-rendered values, worker-driven playback, fullscreen and hidden
+  interface modes, six visual presets, and advanced audio controls.
 - Read deterministic narration, live operation counters, recursion depth, phase, JavaScript execution time, and pseudocode highlighting.
 - Compare two algorithms on the same array with synchronized playback and a measured execution summary.
 - Search and filter the 36-algorithm catalog by family, stability, in-place behavior, and comparison type.
@@ -34,9 +43,9 @@ The service binds only to the dev-lab LAN address. It has no accounts, database,
 
 ## Pickers and controls
 
-The Algorithm and Dataset fields are searchable custom comboboxes rather than native browser
-menus. Use Up/Down Arrow to move, Home/End to jump, Enter to select, Escape to close, or begin
-typing while the field has focus. Focus returns to the trigger after the list closes.
+The Algorithm field is a searchable custom combobox rather than a native browser menu. Use Up/Down
+Arrow to move, Home/End to jump, Enter to select, Escape to close, or begin typing while the field
+has focus. Focus returns to the trigger after the list closes.
 
 Algorithms are grouped as Exchange, Selection, Insertion, Merge, Partition / quick, Heap-based,
 Distribution, Network, Hybrid, and Novelty and impractical sorts. Each option includes its local
@@ -44,10 +53,11 @@ Lucide motif, teaching description, family, important traits, complexity, and an
 Search matches names, aliases, families, and teaching terms. Incompatible choices remain visible
 with their constraint explained.
 
-Datasets are grouped into generated data and custom input. Each option has a pattern icon, concise
-description, and six-bar preview. Binary preferences use accessible switches with visible on/off
-state; speed and volume remain labeled sliders. Playback uses labeled icon buttons, and the primary
-button changes from Start to Pause to Resume as the player state changes.
+The Dataset picker omits search because its option set is short. Each option uses a six-bar preview,
+text label and description, and a check state—without a repeated inline icon. Binary preferences
+use accessible switches with visible on/off state; speed and volume remain labeled sliders.
+Playback uses labeled icon buttons, and the primary button changes from Start to Pause to Resume as
+the player state changes.
 
 ## Algorithm guide
 
@@ -57,7 +67,7 @@ to notice, worked example, and common mistake. Complexity values use a shared se
 with `<var>` and `<sup>` so notation such as O(n²), O(n log n), and O(d(n + b)) remains readable to
 assistive technology and in both themes.
 
-## Keyboard shortcuts
+## Visualize keyboard shortcuts
 
 | Key         | Action                  |
 | ----------- | ----------------------- |
@@ -72,6 +82,10 @@ assistive technology and in both themes.
 Keyboard shortcuts do not fire while focus is inside an input, button, or textarea. Every icon-only
 theme action has an accessible name and tooltip; the page also includes a skip link, visible focus,
 tab semantics, labeled groups, screen-reader operation updates, and reduced-motion support.
+
+Sandbox adds `H` for interface visibility, `F` for fullscreen, and Up/Down Arrow for speed. Its
+controls remain recoverable with a visible Show controls button and Escape restores the interface
+before leaving fullscreen.
 
 ## Supported algorithms
 
@@ -103,6 +117,9 @@ The TimSort, IntroSort, MSD Radix, Tournament, Batcher, and Bogo implementations
 - Bogo Sort: maximum 8; recommended 6. A bounded shuffle attempt count falls back to Insertion Sort so cancellation and completion remain safe.
 - Stored event history is capped at 250,000 events. Every event carries a bounded array snapshot, making previous-step behavior exact and fast for visualization-sized arrays.
 - Benchmark mode supports up to 50,000 values and skips quadratic/pathological choices above 5,000.
+- Sandbox tiers are 64–4,096. Quick, merge, heap, radix, counting, and bitonic reach 4,096; Shell
+  reaches 2,048; quadratic classics stop at 512; Bitonic requires a power of two. Bogo, Slow, and
+  Stooge are excluded from the high-scale worker pipeline.
 
 The visualizer materializes bounded event streams so reverse stepping is immediate. The benchmark worker uses unanimated implementations, a warm-up, copied identical arrays, multiple trials, median display, and cancellation checkpoints. Results remain device-, browser-, JIT-, workload-, and implementation-specific.
 
@@ -122,7 +139,9 @@ npm run format:check
 npm run lint
 npm run typecheck
 npm test
+npm run test:browser
 npm run build
+npm audit
 ```
 
 ## Production and Arcane deployment
@@ -187,8 +206,8 @@ Never delete the current project before confirming the archive contents. Keep `.
 1. Add one typed entry to `src/data/datasets.ts` with an ID, name, description, icon ID, six-value
    preview, search terms, and any constraint copy.
 2. Add the generator branch in `src/utils/array.ts` when the dataset is generated rather than custom.
-3. Map any new motif in `src/components/Icon.tsx` and extend `DatasetIconId` in `src/types/index.ts`.
-4. Test metadata completeness, search, seeded output, picker keyboard selection, and the 390px layout.
+3. Provide a compact preview pattern; do not add a repeated icon beside the Dataset text label.
+4. Test metadata completeness, seeded output, picker keyboard selection, and the 390px layout.
 
 ## Troubleshooting
 
@@ -200,4 +219,5 @@ Never delete the current project before confirming the archive contents. Keep `.
 - **Counting Sort error:** narrow the maximum-minus-minimum value range to 5,000 or less.
 - **Benchmark feels different between runs:** increase trials and close unrelated workloads; the result is still an observation, not a universal ranking.
 
-More detail is available in `docs/architecture.md`, `docs/algorithms.md`, `docs/deployment.md`, and `docs/testing.md`.
+More detail is available in `docs/architecture.md`, `docs/algorithms.md`,
+`docs/audio-engine.md`, `docs/sandbox.md`, `docs/deployment.md`, and `docs/testing.md`.

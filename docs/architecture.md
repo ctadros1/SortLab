@@ -15,17 +15,19 @@ The production path is:
 
 - `src/algorithms/engine.ts`: generator implementations, event snapshots, counters, and final correctness guard.
 - `src/algorithms/registry.ts`: the single typed source for algorithm names, aliases, families, icon assignments, picker copy, complexity, traits, restrictions, education, warnings, and pseudocode.
-- `src/data/datasets.ts`: typed dataset names, descriptions, icon assignments, miniature previews, constraints, and search terms.
-- `src/components/RichCombobox.tsx`: shared ARIA combobox/listbox behavior, keyboard movement, search, grouped options, outside-click close, and focus restoration.
+- `src/data/datasets.ts`: typed dataset names, descriptions, miniature previews, constraints, and generation metadata.
+- `src/components/RichCombobox.tsx`: shared ARIA combobox/listbox behavior, keyboard movement, optional search, grouped options, outside-click close, and focus restoration.
 - `src/components/ControlSidebar.tsx`: selection, playback, audio, switch, slider, and help sections.
 - `src/components/Icon.tsx`: the single Lucide icon vocabulary for routes, actions, algorithms, and datasets.
 - `src/components/MathNotation.tsx`: semantic, accessible rendering of the registry’s bounded Big-O notation.
 - `src/components/CodePanel.tsx`: Pseudocode and Explain tabs, active-line state, complexity cells, and traits.
-- `src/hooks/useSortPlayer.ts`: event materialization, requestAnimationFrame playback, batching, sound density, status, and history navigation.
+- `src/hooks/useSortPlayer.ts`: event materialization, requestAnimationFrame playback, batching, shared audio-engine events, status, and history navigation.
 - `src/components/BarVisualizer.tsx`: value-height mapping, patterns, markers, state legend, numeric-label density, and accessible narration.
-- `src/audio/audio.ts`: lazy Web Audio initialization, frequency mapping, short envelopes, cleanup, and completion tones.
+- `src/audio/`: shared-context Web Audio engine, bounded voices, ADSR scheduling, frequency and scale mapping, deterministic density, normalization, presets, persistence, and cleanup.
+- `src/sandbox/`: typed high-scale configuration, Canvas 2D renderer, compact operation queue, worker protocol, and worker implementations.
+- `src/hooks/useSandboxPlayer.ts`: Sandbox worker lifecycle, backpressure, frame batching, renderer coordination, sampled audio, persistence, statistics, and completion state.
 - `src/benchmark/benchmark.worker.ts`: identical copied arrays, warm-up, timed trials, medians, skip rules, and cooperative cancellation checkpoints.
-- `src/components/*Page.tsx`: Visualize, Compare, Learn, and Benchmark product surfaces.
+- `src/components/*Page.tsx`: Visualize, Sandbox, Compare, Learn, and Benchmark product surfaces.
 
 ## Event and history model
 
@@ -40,7 +42,10 @@ The player materializes the stream only after validation and caps it at 250,000 
 - React state stores only the event index and bounded stream; derived array/status values are not duplicated.
 - Labels automatically disappear on dense mobile visualizations.
 - Benchmark work is isolated in a Worker and yields between trials so cancellation messages can be processed.
-- Audio nodes are short-lived and disconnected on completion; tone density is throttled above 30 steps per second.
+- Sandbox work is isolated in a dedicated Worker, streams 512-operation batches, and uses ACK-based
+  24,000 / 8,000 queue backpressure. Canvas redraw is capped at 30 or 60 fps.
+- Audio nodes are short-lived and disconnected on completion; deterministic sampling, a 12-voice
+  default limit, inverse-square-root gain normalization, and a compressor bound dense playback.
 
 ## Accessibility
 
