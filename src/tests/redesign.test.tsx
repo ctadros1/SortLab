@@ -9,6 +9,7 @@ import {
 import { AlgorithmPicker } from '../components/AlgorithmPicker'
 import { MathNotation } from '../components/MathNotation'
 import { RichCombobox } from '../components/RichCombobox'
+import { Switch } from '../components/Switch'
 import { datasetRegistry, searchDatasets } from '../data/datasets'
 import { filterRichOptions, nextEnabledIndex, type RichOption } from '../ui/combobox'
 import { complexityLabel, complexityParts } from '../ui/math'
@@ -106,6 +107,20 @@ describe('accessible interaction utilities', () => {
     expect(html).toContain('Exchange sorts')
     expect(nextSwitchState(false)).toBe(true)
     expect(nextSwitchState(true)).toBe(false)
+  })
+
+  it('renders a plain switch without reserving an empty icon column', () => {
+    const html = renderToStaticMarkup(
+      <Switch
+        checked
+        onChange={() => undefined}
+        label="Use same array"
+        description="Keep the seed fixed"
+      />,
+    )
+    expect(html).toContain('switch-control--plain')
+    expect(html).not.toContain('switch-control__icon')
+    expect(html).toContain('role="switch"')
   })
 })
 

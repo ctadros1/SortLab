@@ -12,10 +12,14 @@ interface Props {
 
 export function Switch({ checked, onChange, label, icon, description, disabled }: Props) {
   return (
-    <div className={`switch-control ${disabled ? 'is-disabled' : ''}`}>
-      <span className="switch-control__icon" aria-hidden="true">
-        {icon}
-      </span>
+    <div
+      className={`switch-control ${icon ? '' : 'switch-control--plain'} ${disabled ? 'is-disabled' : ''}`}
+    >
+      {icon ? (
+        <span className="switch-control__icon" aria-hidden="true">
+          {icon}
+        </span>
+      ) : null}
       <span className="switch-control__copy">
         <strong>{label}</strong>
         {description ? <small>{description}</small> : null}

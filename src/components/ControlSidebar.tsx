@@ -3,27 +3,17 @@ import type { useSortPlayer } from '../hooks/useSortPlayer'
 import type { DatasetMode } from '../types'
 import { AlgorithmPicker } from './AlgorithmPicker'
 import { DatasetPicker } from './DatasetPicker'
-import { AppIcon, type AppIconName } from './Icon'
+import { AppIcon } from './Icon'
 import { Switch } from './Switch'
 
 type Player = ReturnType<typeof useSortPlayer>
 
-function ControlLabel({ icon, children }: { icon: AppIconName; children: string }) {
-  return (
-    <span className="control-label">
-      <AppIcon name={icon} aria-hidden="true" />
-      {children}
-    </span>
-  )
+function ControlLabel({ children }: { children: string }) {
+  return <span className="control-label">{children}</span>
 }
 
-function RailHeading({ icon, children }: { icon: AppIconName; children: string }) {
-  return (
-    <h2 className="rail-section__heading">
-      <AppIcon name={icon} aria-hidden="true" />
-      {children}
-    </h2>
-  )
+function RailHeading({ children }: { children: string }) {
+  return <h2 className="rail-section__heading">{children}</h2>
 }
 
 interface Props {
@@ -65,9 +55,9 @@ export function ControlSidebar({
   return (
     <aside className="control-rail" aria-label="Sorting controls">
       <div className="rail-section rail-section--selection">
-        <RailHeading icon="algorithm">Selection</RailHeading>
+        <RailHeading>Selection</RailHeading>
         <div className="control-field control-field--algorithm">
-          <ControlLabel icon="algorithm">Algorithm</ControlLabel>
+          <ControlLabel>Algorithm</ControlLabel>
           <AlgorithmPicker
             value={player.algorithmId}
             values={player.source}
@@ -76,12 +66,12 @@ export function ControlSidebar({
           />
         </div>
         <div className="control-field">
-          <ControlLabel icon="dataset">Dataset</ControlLabel>
+          <ControlLabel>Dataset</ControlLabel>
           <DatasetPicker value={mode} onChange={setMode} disabled={player.controlsLocked} />
         </div>
         {mode === 'custom' ? (
           <label className="control-field custom-input-field">
-            <ControlLabel icon="write">Comma-separated integers</ControlLabel>
+            <ControlLabel>Comma-separated integers</ControlLabel>
             <textarea
               value={custom}
               onChange={(event) => setCustom(event.target.value)}
@@ -92,7 +82,7 @@ export function ControlSidebar({
         ) : null}
         <div className="field-row">
           <label className="control-field">
-            <ControlLabel icon="seed">Seed</ControlLabel>
+            <ControlLabel>Seed</ControlLabel>
             <input
               type="number"
               value={seed}
@@ -101,7 +91,7 @@ export function ControlSidebar({
             />
           </label>
           <label className="control-field">
-            <ControlLabel icon="size">Size</ControlLabel>
+            <ControlLabel>Size</ControlLabel>
             <input
               type="number"
               min="5"
@@ -113,20 +103,19 @@ export function ControlSidebar({
           </label>
         </div>
         <button
-          className="button button--secondary button--with-icon generate-button"
+          className="button button--secondary generate-button"
           onClick={() => regenerate()}
           disabled={player.controlsLocked}
         >
-          <AppIcon name="generate" aria-hidden="true" />
           Generate array
         </button>
       </div>
 
       <div className="rail-section">
-        <RailHeading icon="play">Playback</RailHeading>
+        <RailHeading>Playback</RailHeading>
         <label className="range-label">
           <span>
-            <ControlLabel icon="speed">Speed</ControlLabel>
+            <ControlLabel>Speed</ControlLabel>
             <strong>{player.speed} steps/s</strong>
           </span>
           <input
@@ -142,7 +131,6 @@ export function ControlSidebar({
           onChange={setSameArray}
           label="Use same array"
           description="Keep the seed fixed when shuffling"
-          icon={<AppIcon name="compare" />}
         />
         <div className="playback-grid" aria-label="Playback controls">
           <button
@@ -214,17 +202,16 @@ export function ControlSidebar({
       </div>
 
       <div className="rail-section">
-        <RailHeading icon="audio">Audio</RailHeading>
+        <RailHeading>Audio</RailHeading>
         <Switch
           checked={player.sound}
           onChange={player.setSound}
           label="Sound"
           description="Value-mapped Web Audio tones"
-          icon={<AppIcon name={player.sound ? 'sound' : 'volume'} />}
         />
         <label className="range-label">
           <span>
-            <ControlLabel icon="volume">Volume</ControlLabel>
+            <ControlLabel>Volume</ControlLabel>
             <strong>{Math.round(player.volume * 100)}%</strong>
           </span>
           <input
@@ -240,11 +227,9 @@ export function ControlSidebar({
       </div>
 
       <div className="rail-section rail-section--help">
-        <RailHeading icon="keyboard">Help</RailHeading>
+        <RailHeading>Help</RailHeading>
         <details className="shortcut-help">
-          <summary>
-            <AppIcon name="keyboard" aria-hidden="true" /> Keyboard shortcuts
-          </summary>
+          <summary>Keyboard shortcuts</summary>
           <dl>
             <div>
               <dt>Space</dt>

@@ -95,9 +95,7 @@ export function VisualizerPage() {
 
       <section className="visual-stage" aria-label="Sorting visualization workspace">
         <div className="mobile-algorithm-picker">
-          <span className="control-label">
-            <AppIcon name="algorithm" aria-hidden="true" /> Algorithm
-          </span>
+          <span className="control-label">Algorithm</span>
           <AlgorithmPicker
             label="Mobile algorithm"
             value={player.algorithmId}

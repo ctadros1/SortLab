@@ -201,19 +201,12 @@ select {
 }
 
 .rail-section__heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin: 0 0 13px;
   color: var(--text);
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.rail-section__heading svg {
-  color: var(--blue);
 }
 
 .control-field {
@@ -225,16 +218,11 @@ select {
 .control-field > span:first-child {
   display: flex;
   align-items: center;
-  gap: 7px;
   min-height: 20px;
   margin-bottom: 7px;
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 750;
-}
-
-.control-label svg {
-  color: var(--ink-soft);
 }
 
 .control-field input[type='number'],
@@ -283,6 +271,10 @@ input[type='range'] {
   gap: 8px;
   min-height: 50px;
   padding: 7px 0;
+}
+
+.switch-control--plain {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .switch-control__icon {
