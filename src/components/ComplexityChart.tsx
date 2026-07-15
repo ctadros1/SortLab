@@ -1,3 +1,5 @@
+import { MathNotation } from './MathNotation'
+
 const curves = [
   { label: 'O(1)', color: 'curve-1', values: () => 1 },
   { label: 'O(log n)', color: 'curve-2', values: (n: number) => Math.log2(n) },
@@ -65,7 +67,7 @@ export function ComplexityChart() {
           {curves.map((curve) => (
             <span key={curve.label}>
               <i className={curve.color} />
-              {curve.label}
+              <MathNotation value={curve.label} />
             </span>
           ))}
         </div>
