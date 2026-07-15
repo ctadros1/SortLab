@@ -61,11 +61,23 @@ the player state changes.
 
 ## Algorithm guide
 
-The Pseudocode tab uses aligned line numbers, keyword styling, a single active-line marker, and a
-live explanation. The Explain tab summarizes the current phase and operation, invariant, key thing
-to notice, worked example, and common mistake. Complexity values use a shared semantic renderer
+The desktop Visualize controls form an independently scrolling left rail. The right Algorithm Guide
+fills the viewport below the header while leaving wheel scrolling with the main document. Both rails
+return to normal document flow on narrower screens.
+
+The Code tab supports Pseudocode, C, C++, Java, Python, JavaScript, and TypeScript. It uses aligned
+line numbers, lightweight token styling, a single active-line marker, and a live explanation. The
+selected language is saved locally, and changing languages during playback preserves the active
+semantic operation. The Explain tab summarizes the current phase and operation, invariant, key
+thing to notice, worked example, and common mistake.
+
+Event progress is a non-interactive, bounded milestone display rather than a seek control. The
+legend places labels before their matching state symbols and exposes only meaningful bar states.
+The compact guide presents Worst, Average, and Best complexity followed by Stable, In place, and
+Adaptive traits; space complexity remains available in Learn. Values use a shared semantic renderer
 with `<var>` and `<sup>` so notation such as O(n²), O(n log n), and O(d(n + b)) remains readable to
-assistive technology and in both themes.
+assistive technology and in both themes. See [`docs/visualize.md`](docs/visualize.md) for extension
+and accessibility details.
 
 ## Visualize keyboard shortcuts
 

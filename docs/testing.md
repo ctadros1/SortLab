@@ -17,7 +17,9 @@ The Vitest suite iterates over every registry entry and verifies supported edge 
 The redesign suite additionally checks algorithm grouping, name/alias/family search, all 36 icon
 assignments, pathological warnings, all dataset previews, combobox filtering and disabled-option
 navigation, selected option rendering, switch state, semantic formula output, marker mapping, and
-responsive marker/value headroom rules.
+responsive marker/value headroom rules. Visualize coverage verifies all algorithms against the
+seven-language semantic code registry, bounded milestone progress, legend ordering, statistics
+boundaries, persisted language choice, and the compact complexity/traits contract.
 
 Audio tests cover mapping boundaries, equal and negative datasets, clamping, pitch quantization,
 ADSR scheduling, voice limits, gain normalization, density, cancellation, context reuse, presets,
@@ -41,8 +43,9 @@ Verify in the built application:
 - 1440, 1024, 768, and 390 pixel widths with no horizontal overflow.
 - Algorithm and dataset picker grouping, search, Arrow/Home/End/Enter/Escape behavior, warnings,
   focus restoration, and mobile popover containment.
-- Switch announcement, Start/Pause/Resume transitions, Pseudocode/Explain tabs, live active line,
-  semantic superscripts, and non-colliding active markers.
+- Switch announcement, Start/Pause/Resume transitions, Code/Explain tabs, seven language choices,
+  live semantic active lines across recursive, distribution, and network algorithms, semantic
+  superscripts, and non-colliding active markers.
 - Visualize exposes exactly Sound, Volume, and Classic / Soft / Minimal while each preset applies.
 - Sandbox Canvas rendering, algorithm and Dataset selection, amount changes, large Merge completion,
   advanced audio settings, fast stop, route cleanup, restricted quadratic amounts, interface hide
@@ -59,7 +62,7 @@ The design references live in `docs/design/`. Compare the accepted desktop and m
 3. true-white light palette and complete dark theme;
 4. UI and monospace type hierarchy;
 5. state colors plus hatching, borders, and markers;
-6. pseudocode highlight and explanation hierarchy;
+6. code highlight, language selection, and explanation hierarchy;
 7. responsive labels, touch targets, and overflow;
 8. chart scales, titles, labels, caveats, and non-color distinction.
 

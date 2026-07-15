@@ -20,7 +20,9 @@ The production path is:
 - `src/components/ControlSidebar.tsx`: selection, playback, audio, switch, slider, and help sections.
 - `src/components/Icon.tsx`: the single Lucide icon vocabulary for routes, actions, algorithms, and datasets.
 - `src/components/MathNotation.tsx`: semantic, accessible rendering of the registry’s bounded Big-O notation.
-- `src/components/CodePanel.tsx`: Pseudocode and Explain tabs, active-line state, complexity cells, and traits.
+- `src/code/algorithmCode.ts`: typed seven-language snippets with stable semantic line IDs, token metadata, explanations, and guarded phase fallbacks.
+- `src/components/CodePanel.tsx`: Code and Explain tabs, persisted language selection, active-line state, compact complexity, and traits.
+- `src/components/EventProgress.tsx`: bounded, non-interactive event milestones with progress semantics.
 - `src/hooks/useSortPlayer.ts`: event materialization, requestAnimationFrame playback, batching, shared audio-engine events, status, and history navigation.
 - `src/components/BarVisualizer.tsx`: value-height mapping, patterns, markers, state legend, numeric-label density, and accessible narration.
 - `src/audio/`: shared-context Web Audio engine, bounded voices, ADSR scheduling, frequency and scale mapping, deterministic density, normalization, presets, persistence, and cleanup.
@@ -31,7 +33,7 @@ The production path is:
 
 ## Event and history model
 
-Each generator owns a copied working array and yields a discriminated `SortEvent`. Events contain an immutable array snapshot, affected indices, pseudocode line ID, deterministic narration, phase, cumulative counters, and optional active range.
+Each generator owns a copied working array and yields a discriminated `SortEvent`. Events contain an immutable array snapshot, affected indices, semantic code-line ID, deterministic narration, phase, cumulative counters, and optional engine-only active range. The code registry maps the same semantic IDs into every supported language so playback history and language switching retain the correct highlight.
 
 The player materializes the stream only after validation and caps it at 250,000 events. This trades memory for exact, instant previous/next/jump behavior at educational visualization sizes. Large benchmark inputs never use this history path.
 
@@ -53,7 +55,7 @@ Controls use semantic buttons, labels, inputs, tables, headings, regions, tabs, 
 listboxes, labeled option groups, and switches. The custom pickers implement Arrow Up/Down,
 Home/End, Enter, Escape, type-to-search, outside-click closing, and focus restoration. Visual states
 combine color with hatching, borders, icons, labels, and narration. Bar geometry reserves separate
-marker and value headroom. The active pseudocode line has a non-color pointer, border, and
+marker and value headroom. The active code line has a non-color pointer, border, and
 screen-reader text. Formulas expose plain-language labels. Keyboard focus remains visible, a skip
 link reaches the active main surface, and `prefers-reduced-motion` disables transition duration
 while retaining discrete state changes. Core mobile actions are at least 44 pixels tall.
