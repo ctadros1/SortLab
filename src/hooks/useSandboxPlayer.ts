@@ -218,7 +218,6 @@ export function useSandboxPlayer() {
       values: sourceRef.current,
       batchSize: 512,
       operationBudget: sandboxOperationBudget(algorithm.id, sourceRef.current.length),
-      timeLimitMs: 15_000,
     } satisfies SandboxWorkerRequest)
     statusRef.current = 'running'
     setStatus('running')

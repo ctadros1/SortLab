@@ -50,8 +50,8 @@ The player materializes the stream only after validation and caps it at 250,000 
 - Labels automatically disappear on dense mobile visualizations.
 - Benchmark work is isolated in a Worker and yields between trials so cancellation messages can be processed.
 - Sandbox work is isolated in a dedicated Worker, streams 512-operation batches, and uses ACK-based
-  24,000 / 8,000 queue backpressure. Every run also has a calculated operation budget and a
-  15-second worker deadline. Canvas redraw is capped at 30 or 60 fps.
+  24,000 / 8,000 queue backpressure. Every run also has a calculated operation budget. Canvas redraw
+  is capped at 30 or 60 fps.
 - Audio nodes are short-lived and disconnected on completion; deterministic sampling, a 12-voice
   default limit, inverse-square-root gain normalization, and a compressor bound dense playback.
 

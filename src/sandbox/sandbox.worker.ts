@@ -19,17 +19,12 @@ class OperationEmitter {
     private readonly runId: number,
     private readonly batchSize: number,
     private readonly operationBudget: number,
-    private readonly deadline: number,
   ) {}
 
   async emit(operation: SandboxOperation) {
     if (this.runId !== activeRun) throw new Error('canceled')
     if (this.stats.operations >= this.operationBudget)
       throw new Error('The operation safety limit stopped this run. Choose a smaller amount.')
-    if (performance.now() >= this.deadline)
-      throw new Error(
-        'The 15-second worker safety limit stopped this run. Choose a smaller amount.',
-      )
     this.batch.push(operation)
     this.stats.operations += 1
     if (operation[0] === 0) this.stats.comparisons += 1
@@ -264,12 +259,7 @@ async function bitonicSort(values: number[], emitter: OperationEmitter) {
 async function run(request: Extract<SandboxWorkerRequest, { type: 'start' }>) {
   activeRun = request.runId
   const values = [...request.values]
-  const emitter = new OperationEmitter(
-    request.runId,
-    request.batchSize,
-    request.operationBudget,
-    performance.now() + request.timeLimitMs,
-  )
+  const emitter = new OperationEmitter(request.runId, request.batchSize, request.operationBudget)
   try {
     if (request.algorithm === 'quick') await quickSort(values, emitter)
     else if (request.algorithm === 'merge') await mergeSort(values, emitter)

@@ -51,9 +51,8 @@ Every option visibly identifies what SortLab is doing:
 Native quick, merge, heap, radix, counting, and bitonic paths support up to 4,096 values. Shell
 supports 2,048 and quadratic paths stop at 512. Networks enforce power-of-two amounts. Novelty
 entries stay discoverable but use strict ceilings: Bogosort 8, Bogobogosort 6, Slowsort 100, and
-Stooge Sort 128. Each run also receives a calculated operation budget, a 15-second worker deadline,
-immediate Stop cancellation, and worker termination on route changes. Unavailable amounts remain
-visible with a reason.
+Stooge Sort 128. Each run also receives a calculated operation budget, immediate Stop cancellation,
+and worker termination on route changes. Unavailable amounts remain visible with a reason.
 
 Supported tiers are 64, 128, 256, 512, 1,024, 2,048, and 4,096. Profiling did not justify exposing
 8,192.
