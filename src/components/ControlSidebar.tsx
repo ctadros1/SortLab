@@ -65,11 +65,12 @@ export function ControlSidebar({
             values={player.source}
             onChange={chooseAlgorithm}
             disabled={player.controlsLocked}
+            portal
           />
         </div>
         <div className="control-field">
           <ControlLabel>Dataset</ControlLabel>
-          <DatasetPicker value={mode} onChange={setMode} disabled={player.controlsLocked} />
+          <DatasetPicker value={mode} onChange={setMode} disabled={player.controlsLocked} portal />
         </div>
         {mode === 'custom' ? (
           <label className="control-field custom-input-field">

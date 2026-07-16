@@ -606,6 +606,10 @@ input[type='range'] {
   box-shadow: var(--shadow-popover);
 }
 
+.rich-select__popover--viewport {
+  z-index: 1000;
+}
+
 .rich-select__search {
   display: flex;
   align-items: center;

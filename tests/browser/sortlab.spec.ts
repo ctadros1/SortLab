@@ -212,6 +212,56 @@ test('Visualize highlights recursive, distribution, and network algorithms', asy
   assertNoConsoleErrors()
 })
 
+test('Visualize sidebar pickers overlay the rail and stay inside the viewport', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/#visualize')
+
+  const controls = page.locator('.control-rail')
+  const overlay = page.locator('body > .rich-select__popover--viewport')
+
+  await page.getByRole('combobox', { name: 'Algorithm' }).click()
+  await expect(overlay).toBeVisible()
+  const algorithmGeometry = await page.evaluate(() => {
+    const rail = document.querySelector<HTMLElement>('.control-rail')!
+    const popover = document.querySelector<HTMLElement>('body > .rich-select__popover--viewport')!
+    return {
+      railRight: rail.getBoundingClientRect().right,
+      popover: popover.getBoundingClientRect().toJSON(),
+      viewportHeight: window.innerHeight,
+    }
+  })
+  expect(algorithmGeometry.popover.right).toBeGreaterThan(algorithmGeometry.railRight)
+  expect(algorithmGeometry.popover.left).toBeGreaterThanOrEqual(0)
+  expect(algorithmGeometry.popover.bottom).toBeLessThanOrEqual(algorithmGeometry.viewportHeight)
+
+  await page.keyboard.press('Escape')
+  await page.getByRole('combobox', { name: 'Dataset' }).click()
+  await expect(overlay).toBeVisible()
+  const datasetGeometry = await page.evaluate(() => {
+    const rail = document.querySelector<HTMLElement>('.control-rail')!
+    const popover = document.querySelector<HTMLElement>('body > .rich-select__popover--viewport')!
+    const list = popover.querySelector<HTMLElement>('.rich-select__list')!
+    return {
+      railRight: rail.getBoundingClientRect().right,
+      popover: popover.getBoundingClientRect().toJSON(),
+      viewportHeight: window.innerHeight,
+      listScrollHeight: list.scrollHeight,
+      listClientHeight: list.clientHeight,
+    }
+  })
+  expect(datasetGeometry.popover.right).toBeGreaterThan(datasetGeometry.railRight)
+  expect(datasetGeometry.popover.bottom).toBeLessThanOrEqual(datasetGeometry.viewportHeight)
+  expect(datasetGeometry.listScrollHeight).toBeGreaterThan(datasetGeometry.listClientHeight)
+
+  await page.getByRole('option', { name: /^Nearly sorted/ }).click()
+  await expect(page.getByRole('combobox', { name: 'Dataset' })).toContainText('Nearly sorted')
+  await expect(controls).toHaveCSS('overflow-y', 'auto')
+  assertNoConsoleErrors()
+})
+
 test('Visualize remains usable without horizontal page overflow on mobile', async ({ page }) => {
   const assertNoConsoleErrors = failOnConsoleErrors(page)
   await page.setViewportSize({ width: 390, height: 844 })

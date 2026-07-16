@@ -10,6 +10,7 @@ interface Props {
   disabled?: boolean
   prominent?: boolean
   label?: string
+  portal?: boolean
 }
 
 export function AlgorithmPicker({
@@ -19,6 +20,7 @@ export function AlgorithmPicker({
   disabled,
   prominent = true,
   label = 'Algorithm',
+  portal = false,
 }: Props) {
   return (
     <RichCombobox
@@ -28,6 +30,7 @@ export function AlgorithmPicker({
       onChange={onChange}
       disabled={disabled}
       prominent={prominent}
+      portal={portal}
       searchPlaceholder="Search name, alias, or family"
       renderSelected={(option) => (
         <span className="picker-selection">

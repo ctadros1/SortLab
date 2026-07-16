@@ -18,9 +18,10 @@ interface Props {
   value: DatasetMode
   onChange: (value: DatasetMode) => void
   disabled?: boolean
+  portal?: boolean
 }
 
-export function DatasetPicker({ value, onChange, disabled }: Props) {
+export function DatasetPicker({ value, onChange, disabled, portal = false }: Props) {
   return (
     <RichCombobox
       label="Dataset"
@@ -29,6 +30,7 @@ export function DatasetPicker({ value, onChange, disabled }: Props) {
       onChange={(next) => onChange(next as DatasetMode)}
       disabled={disabled}
       prominent
+      portal={portal}
       searchable={false}
       renderSelected={(option) => (
         <span className="picker-selection picker-selection--text-only">
