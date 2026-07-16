@@ -26,7 +26,12 @@ The production path is:
 - `src/hooks/useSortPlayer.ts`: event materialization, requestAnimationFrame playback, batching, shared audio-engine events, status, and history navigation.
 - `src/components/BarVisualizer.tsx`: value-height mapping, patterns, markers, state legend, numeric-label density, and accessible narration.
 - `src/audio/`: shared-context Web Audio engine, bounded voices, ADSR scheduling, frequency and scale mapping, deterministic density, normalization, presets, persistence, and cleanup.
-- `src/sandbox/`: typed high-scale configuration, Canvas 2D renderer, compact operation queue, worker protocol, and worker implementations.
+- `src/sandbox/catalog.ts`: the complete categorized Sandbox library, execution labels, worker
+  mappings, aliases, tags, and per-algorithm size ceilings.
+- `src/sandbox/datasets.ts`: 30 deterministic dense-array patterns, including statistical,
+  adversarial, run-based, signed, and duplicate-heavy datasets.
+- `src/sandbox/`: typed high-scale configuration, Canvas 2D renderer, compact operation queue,
+  worker protocol, and worker implementations.
 - `src/hooks/useSandboxPlayer.ts`: Sandbox worker lifecycle, backpressure, frame batching, renderer coordination, sampled audio, persistence, statistics, and completion state.
 - `src/benchmark/benchmark.worker.ts`: identical copied arrays, warm-up, timed trials, medians, skip rules, and cooperative cancellation checkpoints.
 - `src/components/*Page.tsx`: Visualize, Sandbox, Compare, Learn, and Benchmark product surfaces.
@@ -45,7 +50,8 @@ The player materializes the stream only after validation and caps it at 250,000 
 - Labels automatically disappear on dense mobile visualizations.
 - Benchmark work is isolated in a Worker and yields between trials so cancellation messages can be processed.
 - Sandbox work is isolated in a dedicated Worker, streams 512-operation batches, and uses ACK-based
-  24,000 / 8,000 queue backpressure. Canvas redraw is capped at 30 or 60 fps.
+  24,000 / 8,000 queue backpressure. Every run also has a calculated operation budget and a
+  15-second worker deadline. Canvas redraw is capped at 30 or 60 fps.
 - Audio nodes are short-lived and disconnected on completion; deterministic sampling, a 12-voice
   default limit, inverse-square-root gain normalization, and a compressor bound dense playback.
 

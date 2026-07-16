@@ -1,123 +1,16 @@
-import { algorithmById } from '../algorithms/registry'
 import { createAudioSettings } from '../audio/presets'
 import type { SandboxPreferences, SandboxVisualPresetId } from './types'
+import { sandboxAlgorithms } from './catalog'
+
+export {
+  sandboxAlgorithms,
+  sandboxExecutionLabels,
+  type SandboxAlgorithm,
+  type SandboxExecutionMode,
+  type SandboxWorkerKind,
+} from './catalog'
 
 export const sandboxAmounts = [64, 128, 256, 512, 1024, 2048, 4096] as const
-
-export interface SandboxAlgorithm {
-  id: string
-  group:
-    | 'Recommended'
-    | 'Fast comparison sorts'
-    | 'Distribution sorts'
-    | 'Quadratic classics'
-    | 'Network sorts'
-    | 'Experimental'
-  tags: string[]
-  maximum: number
-  powerOfTwo?: boolean
-  workerKind:
-    | 'quick'
-    | 'merge'
-    | 'heap'
-    | 'radix'
-    | 'counting'
-    | 'shell'
-    | 'bubble'
-    | 'selection'
-    | 'insertion'
-    | 'bitonic'
-}
-
-export const sandboxAlgorithms: SandboxAlgorithm[] = [
-  {
-    id: 'quick-hoare',
-    group: 'Recommended',
-    tags: ['Recommended', 'Audio-friendly'],
-    maximum: 4096,
-    workerKind: 'quick',
-  },
-  {
-    id: 'merge',
-    group: 'Recommended',
-    tags: ['Recommended', 'Visual-friendly'],
-    maximum: 4096,
-    workerKind: 'merge',
-  },
-  {
-    id: 'heap',
-    group: 'Recommended',
-    tags: ['Recommended', 'Audio-friendly'],
-    maximum: 4096,
-    workerKind: 'heap',
-  },
-  {
-    id: 'radix-lsd',
-    group: 'Recommended',
-    tags: ['Recommended', 'High throughput'],
-    maximum: 4096,
-    workerKind: 'radix',
-  },
-  {
-    id: 'quick',
-    group: 'Fast comparison sorts',
-    tags: ['Audio-friendly'],
-    maximum: 4096,
-    workerKind: 'quick',
-  },
-  {
-    id: 'merge-bottom-up',
-    group: 'Fast comparison sorts',
-    tags: ['Visual-friendly'],
-    maximum: 4096,
-    workerKind: 'merge',
-  },
-  {
-    id: 'shell',
-    group: 'Fast comparison sorts',
-    tags: ['Visual-friendly'],
-    maximum: 2048,
-    workerKind: 'shell',
-  },
-  {
-    id: 'counting',
-    group: 'Distribution sorts',
-    tags: ['High throughput'],
-    maximum: 4096,
-    workerKind: 'counting',
-  },
-  {
-    id: 'bubble-optimized',
-    group: 'Quadratic classics',
-    tags: ['High event count', 'Size restricted'],
-    maximum: 512,
-    workerKind: 'bubble',
-  },
-  {
-    id: 'selection',
-    group: 'Quadratic classics',
-    tags: ['High event count', 'Size restricted'],
-    maximum: 512,
-    workerKind: 'selection',
-  },
-  {
-    id: 'insertion',
-    group: 'Quadratic classics',
-    tags: ['Audio-friendly', 'Size restricted'],
-    maximum: 512,
-    workerKind: 'insertion',
-  },
-  {
-    id: 'bitonic',
-    group: 'Network sorts',
-    tags: ['Visual-friendly', 'Power-of-two required'],
-    maximum: 4096,
-    powerOfTwo: true,
-    workerKind: 'bitonic',
-  },
-]
-
-export const excludedSandboxAlgorithms = ['bogo', 'slow', 'stooge'] as const
 
 export function isPowerOfTwo(value: number) {
   return value > 0 && (value & (value - 1)) === 0
@@ -127,8 +20,7 @@ export function sandboxAmountRestriction(algorithmId: string, amount: number) {
   const algorithm = sandboxAlgorithms.find((entry) => entry.id === algorithmId)
   if (!algorithm) return 'This algorithm is not available in the high-scale Sandbox pipeline.'
   if (amount > algorithm.maximum) {
-    const name = algorithmById.get(algorithmId)?.name ?? algorithmId
-    return `${name} is limited to ${algorithm.maximum.toLocaleString()} values because of its operation count.`
+    return `${algorithm.name} is limited to ${algorithm.maximum.toLocaleString()} values because of its operation count.`
   }
   if (algorithm.powerOfTwo && !isPowerOfTwo(amount)) {
     return 'This sorting network requires a power-of-two amount.'
@@ -242,4 +134,11 @@ export function estimateSandboxOperations(algorithmId: string, amount: number) {
   if (algorithm.workerKind === 'radix' || algorithm.workerKind === 'counting') return amount * 5
   if (algorithm.workerKind === 'bitonic') return amount * Math.log2(amount) ** 2 * 0.65
   return amount * Math.log2(Math.max(2, amount)) * 2.6
+}
+
+export function sandboxOperationBudget(algorithmId: string, amount: number) {
+  return Math.min(
+    3_000_000,
+    Math.max(25_000, Math.ceil(estimateSandboxOperations(algorithmId, amount) * 6)),
+  )
 }

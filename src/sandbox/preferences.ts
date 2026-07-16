@@ -1,6 +1,7 @@
 import { createAudioSettings, soundPresets } from '../audio/presets'
 import type { SandboxPreferences } from './types'
 import { defaultSandboxPreferences, sandboxAlgorithms, sandboxVisualPresets } from './config'
+import { sandboxDatasetRegistry } from './datasets'
 
 export const SANDBOX_PREFERENCES_KEY = 'sortlab-sandbox-v1'
 
@@ -20,12 +21,16 @@ export function loadSandboxPreferences(storage?: StorageLike): SandboxPreference
       : defaultSandboxPreferences.algorithm
     const visual = { ...defaultSandboxPreferences.visual, ...parsed.visual }
     if (!(visual.preset in sandboxVisualPresets)) visual.preset = 'classic'
+    const dataset = sandboxDatasetRegistry.some(([id]) => id === parsed.dataset)
+      ? parsed.dataset!
+      : defaultSandboxPreferences.dataset
     const presetId =
       parsed.audio?.id && parsed.audio.id in soundPresets ? parsed.audio.id : 'classic'
     return {
       ...defaultSandboxPreferences,
       ...parsed,
       algorithm,
+      dataset,
       visual,
       audio: createAudioSettings(presetId, parsed.audio),
     }

@@ -37,7 +37,8 @@ The service binds only to the dev-lab LAN address. It has no accounts, database,
   interface modes, six visual presets, and advanced audio controls.
 - Read deterministic narration, live operation counters, recursion depth, phase, JavaScript execution time, and pseudocode highlighting.
 - Compare two algorithms on the same array with synchronized playback and a measured execution summary.
-- Search and filter the 36-algorithm catalog by family, stability, in-place behavior, and comparison type.
+- Explore 44 curated teaching algorithms in Visualize and search the complete 200-plus algorithm
+  Sandbox library with explicit Native, Conceptual, Simulated, or Experimental labels.
 - Run cancellable, warm-up-based Web Worker benchmarks with identical copied inputs and median results.
 - Switch between light, dark, and system themes.
 
@@ -103,19 +104,24 @@ before leaving fullscreen.
 
 ### Introductory and exchange/insertion sorts
 
-Bubble Sort, Optimized Bubble Sort, Selection Sort, Insertion Sort, Binary Insertion Sort, Cocktail Shaker Sort, Gnome Sort, Comb Sort, and Odd–Even Sort.
+Bubble Sort, Cocktail Shaker Sort, Odd–Even Sort, Comb Sort, Gnome Sort, Selection Sort, Double
+Selection Sort, Insertion Sort, Binary Insertion Sort, Shell Sort, and Library Sort.
 
 ### Efficient comparison and hybrid sorts
 
-Merge Sort, Top-Down Merge Sort, Bottom-Up Merge Sort, Quick Sort, Lomuto Quick Sort, Hoare Quick Sort, Randomized Quick Sort, Three-Way Quick Sort, Heap Sort, Shell Sort, TimSort-Inspired, and IntroSort-Inspired.
+Merge Sort, Bottom-Up Merge Sort, Natural Merge Sort, Quick Sort, Three-Way Quick Sort, Dual-Pivot
+Quicksort, Heap Sort, Smoothsort, Timsort, and Introsort.
 
 ### Distribution sorts
 
-Counting Sort, Radix Sort (LSD), Radix Sort (MSD), Bucket Sort, and Pigeonhole Sort.
+Counting Sort, Pigeonhole Sort, Bucket Sort, Radix Sort (LSD), Radix Sort (MSD), Binary Radix Sort,
+American Flag Sort, and Flashsort.
 
 ### Specialized, network, and novelty sorts
 
-Cycle Sort, Pancake Sort, Strand Sort, Tree Sort, Tournament Sort, Bitonic Sort, Batcher Odd–Even Merge Sort, Stooge Sort, Slow Sort, and Bogo Sort.
+Cycle Sort, Pancake Sort, Strand Sort, Tree Sort, Tournament Sort, Patience Sort, Bitonic Sort,
+Batcher Odd–Even Merge Sort, simulated Parallel Merge and Sample Sort, Bogo Sort, Stooge Sort,
+Slowsort, simulated Sleep Sort, and simulated Bead Sort.
 
 The TimSort, IntroSort, MSD Radix, Tournament, Batcher, and Bogo implementations are explicitly labeled educational approximations where their teaching-oriented behavior differs from a production library or formal optimized implementation. No claim is made that they match Python, Java, V8, or the C++ standard library.
 
@@ -130,8 +136,8 @@ The TimSort, IntroSort, MSD Radix, Tournament, Batcher, and Bogo implementations
 - Stored event history is capped at 250,000 events. Every event carries a bounded array snapshot, making previous-step behavior exact and fast for visualization-sized arrays.
 - Benchmark mode supports up to 50,000 values and skips quadratic/pathological choices above 5,000.
 - Sandbox tiers are 64–4,096. Quick, merge, heap, radix, counting, and bitonic reach 4,096; Shell
-  reaches 2,048; quadratic classics stop at 512; Bitonic requires a power of two. Bogo, Slow, and
-  Stooge are excluded from the high-scale worker pipeline.
+  reaches 2,048; quadratic classics stop at 512; networks require powers of two. Novelty entries
+  remain searchable but are capped as low as 6–8 values and protected by operation/time budgets.
 
 The visualizer materializes bounded event streams so reverse stepping is immediate. The benchmark worker uses unanimated implementations, a warm-up, copied identical arrays, multiple trials, median display, and cancellation checkpoints. Results remain device-, browser-, JIT-, workload-, and implementation-specific.
 

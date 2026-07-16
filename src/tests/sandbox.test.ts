@@ -3,14 +3,15 @@ import {
   completionSweepDuration,
   defaultSandboxPreferences,
   estimateSandboxOperations,
-  excludedSandboxAlgorithms,
   isPowerOfTwo,
   operationsPerFrame,
   sandboxAlgorithms,
   sandboxAmountRestriction,
+  sandboxOperationBudget,
   sandboxVisualPresets,
 } from '../sandbox/config'
 import { nextHiddenInterface, sandboxShortcutAction } from '../sandbox/controls'
+import { generateSandboxArray, sandboxDatasetRegistry } from '../sandbox/datasets'
 import { OperationQueue } from '../sandbox/operationQueue'
 import {
   loadSandboxPreferences,
@@ -20,11 +21,25 @@ import {
 import { isSandboxWorkerResponse } from '../sandbox/workerProtocol'
 
 describe('Sandbox algorithm and amount policy', () => {
-  it('publishes categorized, implemented algorithms without pathological choices', () => {
-    expect(sandboxAlgorithms.length).toBeGreaterThanOrEqual(10)
+  it('publishes the complete categorized library with explicit execution modes', () => {
+    expect(sandboxAlgorithms.length).toBeGreaterThanOrEqual(200)
     expect(sandboxAlgorithms.some((algorithm) => algorithm.group === 'Recommended')).toBe(true)
-    for (const excluded of excludedSandboxAlgorithms)
-      expect(sandboxAlgorithms.some((algorithm) => algorithm.id === excluded)).toBe(false)
+    expect(sandboxAlgorithms.some((algorithm) => algorithm.id === 'bogo')).toBe(true)
+    expect(sandboxAlgorithms.some((algorithm) => algorithm.executionMode === 'conceptual')).toBe(
+      true,
+    )
+    expect(
+      sandboxAlgorithms.some((algorithm) => algorithm.executionMode === 'simulated-external'),
+    ).toBe(true)
+    expect(new Set(sandboxAlgorithms.map((algorithm) => algorithm.id)).size).toBe(
+      sandboxAlgorithms.length,
+    )
+    for (const algorithm of sandboxAlgorithms) {
+      expect(algorithm.name).toBeTruthy()
+      expect(algorithm.description.length).toBeGreaterThan(20)
+      expect(algorithm.tags.length).toBeGreaterThan(0)
+      expect(algorithm.maximum).toBeGreaterThan(0)
+    }
   })
 
   it('applies complexity-based limits and explains blocked amounts', () => {
@@ -46,6 +61,34 @@ describe('Sandbox algorithm and amount policy', () => {
     )
     expect(operationsPerFrame('realtime', 60)).toBeLessThan(operationsPerFrame('fast', 60))
     expect(operationsPerFrame('fast', 60)).toBeLessThan(operationsPerFrame('maximum', 60))
+    expect(sandboxOperationBudget('merge', 4096)).toBeLessThanOrEqual(3_000_000)
+  })
+
+  it('caps pathological algorithms while keeping them discoverable', () => {
+    expect(sandboxAmountRestriction('bogo', 64)).toMatch(/limited to 8/i)
+    expect(sandboxAmountRestriction('bogobogosort', 64)).toMatch(/limited to 6/i)
+    expect(sandboxAmountRestriction('stooge', 128)).toBeNull()
+  })
+})
+
+describe('Sandbox dataset catalog', () => {
+  it('provides every requested pattern as deterministic finite values', () => {
+    expect(sandboxDatasetRegistry.length).toBeGreaterThanOrEqual(30)
+    for (const [id] of sandboxDatasetRegistry) {
+      const first = generateSandboxArray(id, 64, 42)
+      const second = generateSandboxArray(id, 64, 42)
+      expect(first).toHaveLength(64)
+      expect(first).toEqual(second)
+      expect(first.every(Number.isFinite)).toBe(true)
+    }
+  })
+
+  it('keeps signed and adversarial patterns distinct', () => {
+    expect(generateSandboxArray('positive-negative', 64, 42).some((value) => value < 0)).toBe(true)
+    expect(generateSandboxArray('all-equal', 64, 42).every((value) => value === 50)).toBe(true)
+    expect(generateSandboxArray('quick-killer', 64, 42)).not.toEqual(
+      generateSandboxArray('sorted', 64, 42),
+    )
   })
 })
 

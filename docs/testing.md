@@ -14,7 +14,7 @@ npm audit
 
 The Vitest suite iterates over every registry entry and verifies supported edge cases plus seeded randomized arrays. It independently checks ascending output and multiset preservation. Focused tests cover snapshot immutability, monotonic counters, metadata completeness, custom input errors, seeded generation, size/range restrictions, forward/back/reset transitions, benchmark cancellation state, and audio frequency bounds.
 
-The redesign suite additionally checks algorithm grouping, name/alias/family search, all 36 icon
+The redesign suite additionally checks algorithm grouping, name/alias/family search, all guided icon
 assignments, pathological warnings, all dataset previews, combobox filtering and disabled-option
 navigation, selected option rendering, switch state, semantic formula output, marker mapping, and
 responsive marker/value headroom rules. Visualize coverage verifies all algorithms against the
@@ -23,8 +23,9 @@ boundaries, persisted language choice, and the compact complexity/traits contrac
 
 Audio tests cover mapping boundaries, equal and negative datasets, clamping, pitch quantization,
 ADSR scheduling, voice limits, gain normalization, density, cancellation, context reuse, presets,
-persistence, and route cleanup. Sandbox tests cover algorithm filtering, amount and power-of-two
-limits, visual presets, protocol guards, batching, backpressure, cancellation, hidden-interface and
+persistence, and route cleanup. Sandbox tests cover the 200-plus entry catalog, execution labels,
+30 deterministic datasets, amount and power-of-two limits, pathological caps, operation budgets,
+visual presets, protocol guards, batching, backpressure, cancellation, hidden-interface and
 keyboard state, persistence, and completion timing.
 
 ## Browser interaction matrix
@@ -47,7 +48,8 @@ Verify in the built application:
   live semantic active lines across recursive, distribution, and network algorithms, semantic
   superscripts, and non-colliding active markers.
 - Visualize exposes exactly Sound, Volume, and Classic / Soft / Minimal while each preset applies.
-- Sandbox Canvas rendering, algorithm and Dataset selection, amount changes, large Merge completion,
+- Sandbox Canvas rendering, full-library search, conceptual labels, expanded Dataset selection,
+  amount changes, large Merge completion,
   advanced audio settings, fast stop, route cleanup, restricted quadratic amounts, interface hide
   and restore, fullscreen capability, completion state, mobile controls, and console cleanliness.
 - The profiling suite records wall and animation time, operation throughput, frame rate, Long Tasks,

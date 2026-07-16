@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { algorithmImplementations, materializeEvents } from '../algorithms/engine'
-import { algorithmRegistry, validateAlgorithmInput } from '../algorithms/registry'
+import {
+  algorithmRegistry,
+  validateAlgorithmInput,
+  visualizeAlgorithmRegistry,
+} from '../algorithms/registry'
 import { valueToFrequency } from '../audio/frequencyMapping'
 import { CancellationToken } from '../benchmark/control'
 import { clampStep, resetPlayback, togglePlayback } from '../playback/state'
@@ -55,6 +59,16 @@ describe('sorting algorithm catalog', () => {
       expect(algorithm.hardMax).toBeGreaterThan(0)
       expect(/O|unbounded|super-polynomial/.test(algorithm.complexity.worst)).toBe(true)
     }
+  })
+
+  it('keeps Visualize curated at 44 meaningfully distinct algorithms', () => {
+    expect(visualizeAlgorithmRegistry).toHaveLength(44)
+    expect(visualizeAlgorithmRegistry.map((algorithm) => algorithm.id)).toContain(
+      'parallel-merge-simulated',
+    )
+    expect(visualizeAlgorithmRegistry.map((algorithm) => algorithm.id)).not.toContain(
+      'quick-lomuto',
+    )
   })
 
   it('events include snapshots and monotonic operation counters', () => {

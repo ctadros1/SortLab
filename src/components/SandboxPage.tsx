@@ -18,13 +18,13 @@ import type {
   SandboxVisualPresetId,
   SandboxWidthMode,
 } from '../sandbox/types'
-import { datasetRegistry } from '../data/datasets'
+import { sandboxDatasetRegistry } from '../sandbox/datasets'
 import { algorithmById } from '../algorithms/registry'
 import { AppIcon } from './Icon'
 import { SandboxAlgorithmPicker } from './SandboxAlgorithmPicker'
 import { Switch } from './Switch'
 
-const sandboxDatasets = datasetRegistry.filter((dataset) => dataset.id !== 'custom')
+const sandboxDatasets = sandboxDatasetRegistry
 
 function FormatNumber({ value }: { value: number }) {
   return <>{Math.round(value).toLocaleString()}</>
@@ -238,9 +238,9 @@ export function SandboxPage() {
                   shuffle()
                 }}
               >
-                {sandboxDatasets.map((dataset) => (
-                  <option value={dataset.id} key={dataset.id}>
-                    {dataset.id === 'groups' ? 'Shuffled blocks' : dataset.name}
+                {sandboxDatasets.map(([id, name]) => (
+                  <option value={id} key={id}>
+                    {name}
                   </option>
                 ))}
               </select>

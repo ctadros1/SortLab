@@ -973,6 +973,455 @@ export function* introSortInspired(input: number[]): Generator<SortEvent, number
   return yield* finish(ctx)
 }
 
+export function* doubleSelectionSort(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  for (let left = 0, right = ctx.values.length - 1; left < right; left += 1, right -= 1) {
+    let minimum = left
+    let maximum = left
+    yield ctx.event('range', [left, right], 'scan', 'Scan for both extremes.', 'Dual selection', [
+      left,
+      right,
+    ])
+    for (let index = left + 1; index <= right; index += 1) {
+      yield ctx.compare(minimum, index, 'compare', 'Finding minimum')
+      if (ctx.values[index] < ctx.values[minimum]) minimum = index
+      yield ctx.compare(maximum, index, 'compare', 'Finding maximum')
+      if (ctx.values[index] > ctx.values[maximum]) maximum = index
+    }
+    if (minimum !== left) {
+      yield ctx.swap(left, minimum, 'move', 'Placing minimum')
+      if (maximum === left) maximum = minimum
+    }
+    if (maximum !== right) yield ctx.swap(right, maximum, 'move', 'Placing maximum')
+    yield ctx.event('markSorted', [left, right], 'repeat', 'Both ends are finalized.', 'Finalizing')
+  }
+  return yield* finish(ctx)
+}
+
+export function* naturalMergeSort(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  while (ctx.values.length > 1) {
+    const runs: Array<[number, number]> = []
+    let start = 0
+    while (start < ctx.values.length) {
+      let end = start
+      while (end + 1 < ctx.values.length && ctx.values[end] <= ctx.values[end + 1]) end += 1
+      runs.push([start, end])
+      yield ctx.event(
+        'range',
+        [start, end],
+        'scan',
+        `Detected ordered run ${start}–${end}.`,
+        'Detecting runs',
+        [start, end],
+      )
+      start = end + 1
+    }
+    if (runs.length <= 1) break
+    for (let index = 0; index < runs.length; index += 2) {
+      const left = runs[index]
+      const right = runs[index + 1]
+      if (right) yield* mergeRanges(ctx, left[0], left[1], right[1])
+    }
+  }
+  return yield* finish(ctx)
+}
+
+export function* dualPivotQuickSort(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  function* partition(left: number, right: number): Generator<SortEvent> {
+    if (left >= right) return
+    ctx.enterRecursion()
+    if (ctx.values[left] > ctx.values[right]) yield ctx.swap(left, right, 'move', 'Ordering pivots')
+    const lowPivot = ctx.values[left]
+    const highPivot = ctx.values[right]
+    yield ctx.event(
+      'pivot',
+      [left, right],
+      'scan',
+      `Use ${lowPivot} and ${highPivot} as pivots.`,
+      'Choosing pivots',
+      [left, right],
+    )
+    let low = left + 1
+    let high = right - 1
+    let index = low
+    while (index <= high) {
+      yield ctx.compare(index, left, 'compare', 'Low partition')
+      if (ctx.values[index] < lowPivot) {
+        if (index !== low) yield ctx.swap(index, low, 'move', 'Moving below low pivot')
+        low += 1
+      } else {
+        yield ctx.compare(index, right, 'compare', 'High partition')
+        if (ctx.values[index] > highPivot) {
+          while (index < high && ctx.values[high] > highPivot) {
+            yield ctx.compare(high, right, 'compare', 'Scanning high partition')
+            high -= 1
+          }
+          yield ctx.swap(index, high, 'move', 'Moving above high pivot')
+          high -= 1
+          if (ctx.values[index] < lowPivot) {
+            if (index !== low) yield ctx.swap(index, low, 'move', 'Moving below low pivot')
+            low += 1
+          }
+        }
+      }
+      index += 1
+    }
+    low -= 1
+    high += 1
+    if (left !== low) yield ctx.swap(left, low, 'move', 'Placing low pivot')
+    if (right !== high) yield ctx.swap(right, high, 'move', 'Placing high pivot')
+    yield ctx.event(
+      'markSorted',
+      [low, high],
+      'repeat',
+      'Both pivots are finalized.',
+      'Finalizing pivots',
+    )
+    yield* partition(left, low - 1)
+    yield* partition(low + 1, high - 1)
+    yield* partition(high + 1, right)
+    ctx.leaveRecursion()
+  }
+  yield* partition(0, ctx.values.length - 1)
+  return yield* finish(ctx)
+}
+
+export function* smoothSortModel(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  let alreadyOrdered = true
+  for (let index = 1; index < ctx.values.length; index += 1) {
+    yield ctx.compare(index - 1, index, 'scan', 'Adaptive order check')
+    if (ctx.values[index - 1] > ctx.values[index]) alreadyOrdered = false
+  }
+  if (!alreadyOrdered) {
+    const sift = function* (length: number, root: number): Generator<SortEvent> {
+      let current = root
+      while (true) {
+        let largest = current
+        const left = current * 2 + 1
+        const right = left + 1
+        if (left < length) {
+          yield ctx.compare(largest, left, 'compare', 'Leonardo-heap model')
+          if (ctx.values[left] > ctx.values[largest]) largest = left
+        }
+        if (right < length) {
+          yield ctx.compare(largest, right, 'compare', 'Leonardo-heap model')
+          if (ctx.values[right] > ctx.values[largest]) largest = right
+        }
+        if (largest === current) return
+        yield ctx.swap(current, largest, 'move', 'Restoring heap order')
+        current = largest
+      }
+    }
+    for (let root = Math.floor(ctx.values.length / 2) - 1; root >= 0; root -= 1) {
+      yield ctx.event(
+        'heapify',
+        [root],
+        'repeat',
+        'Add the next Leonardo-heap root.',
+        'Building heaps',
+      )
+      yield* sift(ctx.values.length, root)
+    }
+    for (let end = ctx.values.length - 1; end > 0; end -= 1) {
+      yield ctx.swap(0, end, 'move', 'Extracting maximum')
+      yield* sift(end, 0)
+    }
+  }
+  return yield* finish(ctx)
+}
+
+export function* patienceSort(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  const piles: Array<Array<{ value: number; source: number }>> = []
+  input.forEach((value, source) => {
+    let low = 0
+    let high = piles.length
+    while (low < high) {
+      const middle = Math.floor((low + high) / 2)
+      const top = piles[middle][piles[middle].length - 1]
+      if (top.value >= value) high = middle
+      else low = middle + 1
+    }
+    if (!piles[low]) piles[low] = []
+    piles[low].push({ value, source })
+  })
+  for (let index = 0; index < input.length; index += 1) {
+    let winner = -1
+    for (let pile = 0; pile < piles.length; pile += 1) {
+      const top = piles[pile].at(-1)
+      if (!top) continue
+      if (winner >= 0)
+        yield ctx.compare(piles[winner].at(-1)!.source, top.source, 'compare', 'Merging pile tops')
+      if (winner < 0 || top.value < piles[winner].at(-1)!.value) winner = pile
+    }
+    const next = piles[winner].pop()!
+    yield ctx.write(index, next.value, 'move', 'Writing next pile winner')
+  }
+  return yield* finish(ctx)
+}
+
+export function* binaryRadixSort(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  if (ctx.values.length === 0) return yield* finish(ctx)
+  const minimum = Math.min(...ctx.values)
+  const offset = minimum < 0 ? -minimum : 0
+  const maximum = Math.max(...ctx.values) + offset
+  for (let place = 1; place <= Math.max(1, maximum); place *= 2) {
+    const zero: number[] = []
+    const one: number[] = []
+    for (let index = 0; index < ctx.values.length; index += 1) {
+      const bucket = Math.floor((ctx.values[index] + offset) / place) % 2
+      ;(bucket === 0 ? zero : one).push(ctx.values[index])
+      yield ctx.event(
+        'bucket',
+        [index],
+        'scan',
+        `Bit ${Math.log2(place)} sends this value to bucket ${bucket}.`,
+        'Binary distribution',
+      )
+    }
+    const ordered = zero.concat(one)
+    for (let index = 0; index < ordered.length; index += 1)
+      yield ctx.write(index, ordered[index], 'move', 'Collecting bit buckets')
+    yield ctx.event('note', [], 'repeat', 'Advance to the next binary place.', 'Advancing bit')
+    if (place > Number.MAX_SAFE_INTEGER / 2) break
+  }
+  return yield* finish(ctx)
+}
+
+export function* americanFlagSort(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  if (ctx.values.length === 0) return yield* finish(ctx)
+  const minimum = Math.min(...ctx.values)
+  const offset = minimum < 0 ? -minimum : 0
+  const maximum = Math.max(...ctx.values) + offset
+  let exponent = 1
+  while (Math.floor(maximum / exponent) >= 10) exponent *= 10
+  function* distribute(start: number, end: number, place: number): Generator<SortEvent> {
+    if (end - start < 2 || place < 1) return
+    const counts = Array(10).fill(0) as number[]
+    for (let index = start; index < end; index += 1) {
+      const digit = Math.floor((ctx.values[index] + offset) / place) % 10
+      counts[digit] += 1
+      yield ctx.event(
+        'bucket',
+        [index],
+        'scan',
+        `Count digit ${digit}.`,
+        'Counting digit classes',
+        [start, end - 1],
+      )
+    }
+    const starts = Array(10).fill(start) as number[]
+    for (let digit = 1; digit < 10; digit += 1)
+      starts[digit] = starts[digit - 1] + counts[digit - 1]
+    const next = [...starts]
+    const limits = starts.map((position, digit) => position + counts[digit])
+    for (let digit = 0; digit < 10; digit += 1) {
+      while (next[digit] < limits[digit]) {
+        const index = next[digit]
+        const actual = Math.floor((ctx.values[index] + offset) / place) % 10
+        if (actual === digit) next[digit] += 1
+        else {
+          yield ctx.swap(index, next[actual], 'move', `Cycling value into digit ${actual}`)
+          next[actual] += 1
+        }
+      }
+    }
+    if (place > 1) {
+      for (let digit = 0; digit < 10; digit += 1) {
+        yield* distribute(starts[digit], limits[digit], Math.floor(place / 10))
+      }
+    }
+  }
+  yield* distribute(0, ctx.values.length, exponent)
+  return yield* finish(ctx)
+}
+
+export function* flashSortModel(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  if (ctx.values.length < 2) return yield* finish(ctx)
+  const minimum = Math.min(...ctx.values)
+  const maximum = Math.max(...ctx.values)
+  const classCount = Math.max(2, Math.floor(Math.sqrt(ctx.values.length)))
+  const classes = Array.from({ length: classCount }, () => [] as number[])
+  for (let index = 0; index < ctx.values.length; index += 1) {
+    const ratio = maximum === minimum ? 0 : (ctx.values[index] - minimum) / (maximum - minimum)
+    const bucket = Math.min(classCount - 1, Math.floor(ratio * classCount))
+    classes[bucket].push(ctx.values[index])
+    yield ctx.event(
+      'bucket',
+      [index],
+      'scan',
+      `Place the value near class ${bucket}.`,
+      'Classifying',
+    )
+  }
+  let target = 0
+  for (const group of classes) {
+    group.sort((left, right) => left - right)
+    for (const value of group) yield ctx.write(target++, value, 'move', 'Writing a sorted class')
+  }
+  yield* insertionRange(ctx, 0, ctx.values.length - 1)
+  return yield* finish(ctx)
+}
+
+export function* librarySortModel(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  const shelf: number[] = []
+  for (let source = 0; source < input.length; source += 1) {
+    let low = 0
+    let high = shelf.length
+    while (low < high) {
+      const middle = Math.floor((low + high) / 2)
+      yield ctx.event(
+        'compare',
+        [source],
+        'compare',
+        `Compare with shelf position ${middle}.`,
+        'Finding a gap',
+      )
+      if (shelf[middle] <= input[source]) low = middle + 1
+      else high = middle
+    }
+    shelf.splice(low, 0, input[source])
+    yield ctx.event(
+      'note',
+      [source],
+      'scan',
+      `Reserve the open shelf position ${low}.`,
+      'Gapped insertion',
+    )
+    if (((source + 1) & source) === 0)
+      yield ctx.event('note', [], 'repeat', 'Rebalance gaps across the shelf.', 'Rebalancing')
+  }
+  for (let index = 0; index < shelf.length; index += 1)
+    yield ctx.write(index, shelf[index], 'move', 'Compacting the shelf')
+  return yield* finish(ctx)
+}
+
+export function* parallelMergeSortSimulated(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  const lanes = Math.min(4, Math.max(1, Math.ceil(ctx.values.length / 8)))
+  const width = Math.ceil(ctx.values.length / lanes)
+  for (let lane = 0; lane < lanes; lane += 1) {
+    const start = lane * width
+    const end = Math.min(ctx.values.length - 1, start + width - 1)
+    if (start <= end) {
+      yield ctx.event(
+        'range',
+        [start, end],
+        'scan',
+        `Worker lane ${lane + 1} sorts its range.`,
+        'Simulated worker lane',
+        [start, end],
+      )
+      yield* insertionRange(ctx, start, end)
+    }
+  }
+  for (let mergeWidth = width; mergeWidth < ctx.values.length; mergeWidth *= 2) {
+    for (let left = 0; left < ctx.values.length; left += mergeWidth * 2) {
+      const middle = Math.min(ctx.values.length - 1, left + mergeWidth - 1)
+      const right = Math.min(ctx.values.length - 1, left + mergeWidth * 2 - 1)
+      if (middle < right) yield* mergeRanges(ctx, left, middle, right)
+    }
+    yield ctx.event(
+      'note',
+      [],
+      'repeat',
+      'All lanes reached the merge barrier.',
+      'Synchronization barrier',
+    )
+  }
+  return yield* finish(ctx)
+}
+
+export function* sampleSortSimulated(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  const bucketCount = Math.min(8, Math.max(2, Math.floor(Math.sqrt(Math.max(1, input.length)))))
+  const sample = [...input].sort((left, right) => left - right)
+  const splitters = Array.from(
+    { length: bucketCount - 1 },
+    (_, index) => sample[Math.floor(((index + 1) * sample.length) / bucketCount)] ?? 0,
+  )
+  const buckets = Array.from({ length: bucketCount }, () => [] as number[])
+  for (let index = 0; index < input.length; index += 1) {
+    let bucket = 0
+    while (bucket < splitters.length && input[index] > splitters[bucket]) bucket += 1
+    buckets[bucket].push(input[index])
+    yield ctx.event(
+      'bucket',
+      [index],
+      'scan',
+      `Sample splitters assign this value to partition ${bucket}.`,
+      'Distributing partitions',
+    )
+  }
+  let target = 0
+  for (const bucket of buckets) {
+    bucket.sort((left, right) => left - right)
+    for (const value of bucket)
+      yield ctx.write(target++, value, 'move', 'Collecting a sorted partition')
+  }
+  return yield* finish(ctx)
+}
+
+export function* sleepSortSimulated(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  const scheduled = input
+    .map((value, index) => ({ value, index }))
+    .sort((left, right) => left.value - right.value || left.index - right.index)
+  for (const item of scheduled) {
+    yield ctx.event(
+      'note',
+      [item.index],
+      'scan',
+      `Schedule ${item.value} with a capped conceptual delay.`,
+      'Scheduling timers',
+    )
+  }
+  for (let index = 0; index < scheduled.length; index += 1)
+    yield ctx.write(index, scheduled[index].value, 'move', 'Timer completion')
+  yield ctx.event('note', [], 'repeat', 'All simulated timers have completed.', 'Collecting timers')
+  return yield* finish(ctx)
+}
+
+export function* beadSortSimulated(input: number[]): Generator<SortEvent, number[]> {
+  const ctx = new SortContext(input)
+  if (input.length === 0) return yield* finish(ctx)
+  const minimum = Math.min(...input)
+  const offset = minimum < 0 ? -minimum : 0
+  const shifted = input.map((value) => value + offset)
+  const maximum = Math.max(...shifted)
+  const columns = Array(maximum).fill(0) as number[]
+  for (let row = 0; row < shifted.length; row += 1) {
+    for (let column = 0; column < shifted[row]; column += 1) columns[column] += 1
+    yield ctx.event(
+      'bucket',
+      [row],
+      'scan',
+      `Drop ${shifted[row]} beads into the gravity field.`,
+      'Dropping beads',
+    )
+  }
+  for (let row = 0; row < shifted.length; row += 1) {
+    const threshold = shifted.length - row
+    const value = columns.filter((height) => height >= threshold).length - offset
+    yield ctx.write(row, value, 'move', 'Reading settled bead height')
+  }
+  yield ctx.event(
+    'note',
+    [],
+    'repeat',
+    'Read the settled rows from shortest to tallest.',
+    'Reading bead rows',
+  )
+  return yield* finish(ctx)
+}
+
 export const algorithmImplementations: Record<string, SortGenerator> = {
   bubble: bubbleSort,
   'bubble-optimized': optimizedBubbleSort,
@@ -1007,6 +1456,19 @@ export const algorithmImplementations: Record<string, SortGenerator> = {
   tournament: tournamentSort,
   bitonic: bitonicSort,
   'batcher-odd-even': batcherOddEvenSort,
+  'double-selection': doubleSelectionSort,
+  'merge-natural': naturalMergeSort,
+  'quick-dual-pivot': dualPivotQuickSort,
+  smoothsort: smoothSortModel,
+  patience: patienceSort,
+  'radix-binary': binaryRadixSort,
+  'american-flag': americanFlagSort,
+  flashsort: flashSortModel,
+  library: librarySortModel,
+  'parallel-merge-simulated': parallelMergeSortSimulated,
+  'sample-sort-simulated': sampleSortSimulated,
+  'sleep-sort-simulated': sleepSortSimulated,
+  'bead-sort-simulated': beadSortSimulated,
   stooge: stoogeSort,
   slow: slowSort,
   bogo: bogoSort,

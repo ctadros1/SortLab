@@ -21,7 +21,13 @@ export function nextEnabledIndex(
 }
 
 export function filterRichOptions<T extends RichOption>(options: T[], query: string) {
-  const normalized = query.trim().toLowerCase()
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+  const normalized = normalize(query)
   if (!normalized) return options
-  return options.filter((option) => option.searchText.toLowerCase().includes(normalized))
+  return options.filter((option) => normalize(option.searchText).includes(normalized))
 }

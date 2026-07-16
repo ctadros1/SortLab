@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { sortingAudioEngine } from '../audio/AudioEngine'
-import { generateArray } from '../utils/array'
+import { generateSandboxArray } from '../sandbox/datasets'
 import {
   completionSweepDuration,
   estimateSandboxOperations,
   operationsPerFrame,
   sandboxAlgorithms,
   sandboxAmountRestriction,
+  sandboxOperationBudget,
 } from '../sandbox/config'
 import { OperationQueue } from '../sandbox/operationQueue'
 import { loadSandboxPreferences, saveSandboxPreferences } from '../sandbox/preferences'
@@ -71,7 +72,9 @@ export function useSandboxPlayer() {
   const runIdRef = useRef(0)
   const workerCompleteRef = useRef(false)
   const pendingAckRef = useRef(false)
-  const [initialSource] = useState(() => generateArray(preferences.dataset, preferences.amount, 42))
+  const [initialSource] = useState(() =>
+    generateSandboxArray(preferences.dataset, preferences.amount, 42),
+  )
   const sourceRef = useRef(initialSource)
   const valuesRef = useRef([...initialSource])
   const activeRef = useRef(new Set<number>())
@@ -134,7 +137,7 @@ export function useSandboxPlayer() {
 
   const replaceDataset = useCallback(() => {
     terminateWorker()
-    const next = generateArray(
+    const next = generateSandboxArray(
       preferencesRef.current.dataset,
       preferencesRef.current.amount,
       Math.floor(Math.random() * 1_000_000),
@@ -214,6 +217,8 @@ export function useSandboxPlayer() {
       algorithm: algorithm.workerKind,
       values: sourceRef.current,
       batchSize: 512,
+      operationBudget: sandboxOperationBudget(algorithm.id, sourceRef.current.length),
+      timeLimitMs: 15_000,
     } satisfies SandboxWorkerRequest)
     statusRef.current = 'running'
     setStatus('running')

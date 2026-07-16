@@ -96,6 +96,8 @@ export interface AlgorithmMeta {
   hardMax: number
   warning?: string
   approximation?: boolean
+  /** Curated for the guided teaching picker. The full catalog remains available elsewhere. */
+  visualize: boolean
   pseudocode: Array<{ id: string; text: string; explanation: string }>
 }
 

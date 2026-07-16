@@ -299,6 +299,32 @@ test('Sandbox explains restrictions and keeps hidden controls recoverable', asyn
   assertNoConsoleErrors()
 })
 
+test('Sandbox exposes the complete searchable catalog and expanded datasets', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#sandbox')
+
+  await page.getByRole('combobox', { name: 'Sandbox algorithm' }).click()
+  await page.getByPlaceholder('Search Sandbox algorithms').fill('pattern defeating')
+  const conceptual = page.getByRole('option', { name: /Pattern-Defeating Quicksort/ })
+  await expect(conceptual).toContainText('Conceptual')
+  await conceptual.click()
+  await expect(page.getByRole('combobox', { name: 'Sandbox algorithm' })).toContainText(
+    'Pattern-Defeating Quicksort',
+  )
+
+  await page.getByLabel('Dataset').selectOption('normal-distribution')
+  await expect(page.getByLabel('Dataset')).toHaveValue('normal-distribution')
+  await page.getByLabel('Dataset').selectOption('median-three-killer')
+  await expect(page.getByLabel('Dataset')).toHaveValue('median-three-killer')
+
+  await page.getByRole('combobox', { name: 'Sandbox algorithm' }).click()
+  await page.getByPlaceholder('Search Sandbox algorithms').fill('bogobogosort')
+  const pathological = page.getByRole('option', { name: /Bogobogosort/ })
+  await expect(pathological).toBeDisabled()
+  await expect(pathological).toContainText('limited to 6 values')
+  assertNoConsoleErrors()
+})
+
 test('Sandbox mobile controls have no horizontal overflow', async ({ page }) => {
   const assertNoConsoleErrors = failOnConsoleErrors(page)
   await page.setViewportSize({ width: 390, height: 844 })

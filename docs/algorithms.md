@@ -1,11 +1,15 @@
 # Algorithm catalog notes
 
-SortLab includes 36 algorithms organized into ten teaching families. The typed registry is authoritative for names, aliases, complexity, stability, in-place/adaptive traits, warnings, restrictions, size limits, pseudocode, and educational copy.
+SortLab's guided registry contains 49 instrumented entries, with 44 curated for the Visualize
+picker. Five close variants remain available to Learn, Benchmark, and Sandbox without crowding the
+teaching picker. The typed registry is authoritative for names, aliases, complexity, stability,
+in-place/adaptive traits, warnings, restrictions, size limits, pseudocode, and educational copy.
 
 The picker presents those families as Exchange sorts, Selection sorts, Insertion sorts, Merge
 sorts, Partition / quick sorts, Heap-based sorts, Distribution sorts, Network sorts, Hybrid sorts,
 and Novelty and impractical sorts. Search includes aliases and family terms, while the registry’s
-typed icon assignment keeps every option visually distinct without creating 36 unrelated styles.
+typed icon assignment keeps every option visually distinct without creating dozens of unrelated
+styles.
 
 ## Complexity variables
 
@@ -28,6 +32,12 @@ All implementations preserve duplicates and the input multiset. Negative safe in
 - **Tournament Sort:** explicit shrinking-pool matches for visibility rather than an optimized tournament tree.
 - **Batcher Odd–Even:** repeated odd-even network phases for clarity rather than a hardware-optimized schedule.
 - **Bogo Sort:** bounded deterministic shuffles followed by Insertion Sort when the safety limit is reached.
+- **Smoothsort:** an explicit educational Leonardo-heap model, not instruction-for-instruction
+  parity with a production implementation.
+- **Library Sort and Flashsort:** expose the defining gap/class phases with bounded teaching-level
+  storage and cleanup.
+- **Parallel Merge, Sample, Sleep, and Bead:** deterministic conceptual simulations; they do not
+  claim hardware parallelism, wall-clock timer ordering, or physical beads.
 
 ## Correctness contract
 

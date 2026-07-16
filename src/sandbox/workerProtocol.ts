@@ -15,6 +15,8 @@ export type SandboxWorkerRequest =
       algorithm: SandboxAlgorithm['workerKind']
       values: number[]
       batchSize: number
+      operationBudget: number
+      timeLimitMs: number
     }
   | { type: 'ack'; runId: number }
   | { type: 'cancel'; runId: number }

@@ -1,14 +1,18 @@
-import { algorithmRegistry, familyLabels, validateAlgorithmInput } from '../algorithms/registry'
+import {
+  familyLabels,
+  validateAlgorithmInput,
+  visualizeAlgorithmRegistry,
+} from '../algorithms/registry'
 import { datasetRegistry } from '../data/datasets'
 import type { RichOption } from './combobox'
 
 export interface AlgorithmOption extends RichOption {
-  algorithm: (typeof algorithmRegistry)[number]
+  algorithm: (typeof visualizeAlgorithmRegistry)[number]
   accent: number
 }
 
 export function getAlgorithmOptions(values: number[]): AlgorithmOption[] {
-  return algorithmRegistry.map((algorithm, index) => {
+  return visualizeAlgorithmRegistry.map((algorithm, index) => {
     const disabledReason = validateAlgorithmInput(algorithm.id, values)
     return {
       id: algorithm.id,

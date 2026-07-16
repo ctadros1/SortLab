@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { algorithmById, algorithmRegistry, validateAlgorithmInput } from '../algorithms/registry'
+import {
+  algorithmById,
+  validateAlgorithmInput,
+  visualizeAlgorithmRegistry,
+} from '../algorithms/registry'
 import { useSortPlayer } from '../hooks/useSortPlayer'
 import type { DatasetMode } from '../types'
 import { generateArray, parseCustomInput } from '../utils/array'
@@ -18,8 +22,8 @@ export function VisualizerPage() {
   const [custom, setCustom] = useState('42, 17, 73, 8, 55, 31, 89, 24')
   const [customError, setCustomError] = useState<string | null>(null)
   const [sameArray, setSameArray] = useState(true)
-  const player = useSortPlayer(generateArray('random', 32, 42), 'quick-hoare')
-  const algorithm = algorithmById.get(player.algorithmId) ?? algorithmRegistry[0]
+  const player = useSortPlayer(generateArray('random', 32, 42), 'quick')
+  const algorithm = algorithmById.get(player.algorithmId) ?? visualizeAlgorithmRegistry[0]
 
   const regenerate = useCallback(
     (nextMode = mode, nextSize = size, nextSeed = seed) => {

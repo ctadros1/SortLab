@@ -33,21 +33,39 @@ retained.
 
 ## Algorithms and amount limits
 
-Sandbox currently provides 12 registry-backed choices:
+`catalog.ts` contains the complete 200-plus option Sandbox library. It covers exchange,
+selection/insertion, Shell gap presets, tree/heap, quicksort configurations, merge, distribution,
+radix/string, learned, network, parallel, GPU/vector, external/out-of-core, research, and novelty
+groups. Search matches names, aliases, groups, descriptions, and execution labels.
 
-- Recommended: Quick Sort (Hoare), Merge Sort, Heap Sort, Radix Sort (LSD)
-- Fast comparison sorts: Quick Sort, Bottom-Up Merge Sort, Shell Sort
-- Distribution sorts: Counting Sort
-- Quadratic classics: Optimized Bubble Sort, Selection Sort, Insertion Sort
-- Network sorts: Bitonic Sort
+Every option visibly identifies what SortLab is doing:
 
-Quick, merge, heap, radix, counting, and bitonic support up to 4,096 values. Shell Sort supports
-2,048. The quadratic classics stop at 512. Bitonic Sort requires a power-of-two amount. Bogo Sort,
-Slow Sort, and Stooge Sort are excluded from this pipeline. Unavailable amounts stay visible with a
-reason, and the run cannot start with an invalid combination.
+- **Native:** the worker directly implements the named algorithm used for playback.
+- **Conceptual:** the UI animates the documented structure through a bounded family operation model;
+  it is not presented as a benchmarkable production implementation.
+- **Simulated parallel:** worker lanes and synchronization are conceptual, with no speedup claim.
+- **Simulated external:** runs and transfers are modeled without browser disk I/O.
+- **Simulated GPU:** GPU/vector stages use a safe CPU fallback and make no hardware claim.
+- **Experimental:** optional or research behavior with an explicit fallback.
+
+Native quick, merge, heap, radix, counting, and bitonic paths support up to 4,096 values. Shell
+supports 2,048 and quadratic paths stop at 512. Networks enforce power-of-two amounts. Novelty
+entries stay discoverable but use strict ceilings: Bogosort 8, Bogobogosort 6, Slowsort 100, and
+Stooge Sort 128. Each run also receives a calculated operation budget, a 15-second worker deadline,
+immediate Stop cancellation, and worker termination on route changes. Unavailable amounts remain
+visible with a reason.
 
 Supported tiers are 64, 128, 256, 512, 1,024, 2,048, and 4,096. Profiling did not justify exposing
 8,192.
+
+## Dataset patterns
+
+Sandbox has 30 deterministic presets. In addition to random, sorted, reversed, nearly sorted,
+few-unique, duplicate-heavy, sawtooth, and shuffled blocks, it includes all-equal, sine, bell,
+uniform, normal, exponential, Zipf, organ-pipe, mountain, valley, alternating high/low, rotated,
+scrambled-tail, scrambled-middle, quicksort killers, Timsort runs, radix-friendly integers, large
+and small key ranges, signed values, and duplicate clusters. The selected preset persists locally;
+sorting never starts automatically.
 
 ## Controls and persistence
 

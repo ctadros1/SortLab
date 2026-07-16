@@ -1,5 +1,5 @@
 import type { AudioSettings } from '../audio/audioTypes'
-import type { DatasetMode } from '../types'
+import type { SandboxDatasetId } from './datasets'
 
 export type SandboxSpeedMode = 'realtime' | 'fast' | 'maximum'
 export type SandboxVisualPresetId =
@@ -25,7 +25,7 @@ export interface SandboxVisualSettings {
 
 export interface SandboxPreferences {
   algorithm: string
-  dataset: Exclude<DatasetMode, 'custom'>
+  dataset: SandboxDatasetId
   amount: number
   speedMode: SandboxSpeedMode
   visual: SandboxVisualSettings

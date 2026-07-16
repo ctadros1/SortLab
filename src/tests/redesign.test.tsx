@@ -5,6 +5,7 @@ import {
   algorithmRegistry,
   groupAlgorithms,
   searchAlgorithms,
+  visualizeAlgorithmRegistry,
 } from '../algorithms/registry'
 import { AlgorithmPicker } from '../components/AlgorithmPicker'
 import { DatasetPicker } from '../components/DatasetPicker'
@@ -37,7 +38,8 @@ describe('picker metadata and search', () => {
 
   it('assigns a valid icon, option description, and search text to all algorithms', () => {
     const options = getAlgorithmOptions([4, 2, 3, 1])
-    expect(options).toHaveLength(36)
+    expect(options).toHaveLength(44)
+    expect(options).toHaveLength(visualizeAlgorithmRegistry.length)
     for (const option of options) {
       expect(algorithmIconAssignments[option.id]).toBeTruthy()
       expect(option.algorithm.icon).toBe(algorithmIconAssignments[option.id])
