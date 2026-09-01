@@ -20,6 +20,13 @@ async function chooseAlgorithm(page: Page, name: RegExp) {
   await page.getByRole('option', { name }).click()
 }
 
+async function setAmount(page: Page, amount: number) {
+  const input = page.getByRole('spinbutton', { name: 'Amount' })
+  await input.fill(String(amount))
+  await input.press('Enter')
+  await expect(input).toHaveValue(String(amount))
+}
+
 async function readStats(page: Page) {
   return page
     .locator('.sandbox-stats')
@@ -65,7 +72,7 @@ test('profile supported high-scale algorithms and queue bounds', async ({ page }
 
   for (const algorithm of algorithms) {
     for (const amount of [256, 1024, 4096]) {
-      await page.getByLabel('Amount').selectOption(String(amount))
+      await setAmount(page, amount)
       await chooseAlgorithm(page, algorithm.name)
       await page.evaluate(() => {
         const state = (
@@ -142,7 +149,7 @@ test('profile supported high-scale algorithms and queue bounds', async ({ page }
     }
   }
 
-  await page.getByLabel('Amount').selectOption('256')
+  await setAmount(page, 256)
   await chooseAlgorithm(page, /^Optimized Bubble Sort/)
   const quadraticStarted = Date.now()
   await page.getByRole('button', { name: 'Start' }).click()
@@ -169,7 +176,7 @@ test('profile supported high-scale algorithms and queue bounds', async ({ page }
     heapDeltaMb: null,
   })
 
-  await page.getByLabel('Amount').selectOption('512')
+  await setAmount(page, 512)
   await page.getByLabel('Speed mode').selectOption('realtime')
   await page.getByRole('button', { name: 'Start' }).click()
   const stopStarted = Date.now()

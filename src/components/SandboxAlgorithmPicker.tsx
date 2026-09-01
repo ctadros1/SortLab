@@ -1,4 +1,4 @@
-import { sandboxAlgorithms, sandboxAmountRestriction } from '../sandbox/config'
+import { sandboxAlgorithms } from '../sandbox/config'
 import type { AlgorithmIconId } from '../types'
 import type { RichOption } from '../ui/combobox'
 import { AlgorithmIcon, AppIcon } from './Icon'
@@ -21,9 +21,8 @@ const workerIcons: Record<(typeof sandboxAlgorithms)[number]['workerKind'], Algo
   bitonic: 'network',
 }
 
-function getOptions(amount: number): SandboxAlgorithmOption[] {
+function getOptions(): SandboxAlgorithmOption[] {
   return sandboxAlgorithms.flatMap((sandbox) => {
-    const disabledReason = sandboxAmountRestriction(sandbox.id, amount)
     return [
       {
         id: sandbox.id,
@@ -36,8 +35,6 @@ function getOptions(amount: number): SandboxAlgorithmOption[] {
           ...sandbox.aliases,
           ...sandbox.tags,
         ].join(' '),
-        disabled: Boolean(disabledReason),
-        disabledReason: disabledReason ?? undefined,
         sandbox,
       },
     ]
@@ -46,20 +43,20 @@ function getOptions(amount: number): SandboxAlgorithmOption[] {
 
 interface Props {
   value: string
-  amount: number
   onChange: (value: string) => void
   disabled?: boolean
 }
 
-export function SandboxAlgorithmPicker({ value, amount, onChange, disabled }: Props) {
+export function SandboxAlgorithmPicker({ value, onChange, disabled }: Props) {
   return (
     <RichCombobox
       label="Sandbox algorithm"
       value={value}
-      options={getOptions(amount)}
+      options={getOptions()}
       onChange={onChange}
       disabled={disabled}
       prominent={false}
+      portal
       searchPlaceholder="Search Sandbox algorithms"
       renderSelected={(option) => (
         <span className="picker-selection sandbox-picker-selection">
@@ -67,7 +64,10 @@ export function SandboxAlgorithmPicker({ value, amount, onChange, disabled }: Pr
             <AlgorithmIcon name={workerIcons[option.sandbox.workerKind]} />
           </span>
           <span>
-            <strong>{option.sandbox.name}</strong>
+            <span className="sandbox-picker-selection__title">
+              <strong>{option.sandbox.name}</strong>
+              <i>Max {option.sandbox.maximum.toLocaleString()}</i>
+            </span>
             <small>{option.sandbox.tags.slice(0, 2).join(' · ')}</small>
           </span>
         </span>
@@ -80,6 +80,9 @@ export function SandboxAlgorithmPicker({ value, amount, onChange, disabled }: Pr
           <span className="algorithm-option__copy">
             <span className="algorithm-option__title">
               <strong>{option.sandbox.name}</strong>
+              <i className="sandbox-algorithm-limit">
+                Max {option.sandbox.maximum.toLocaleString()}
+              </i>
               {selected ? <AppIcon name="check" aria-hidden="true" size={15} /> : null}
             </span>
             <small>{option.sandbox.description}</small>

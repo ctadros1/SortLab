@@ -3,7 +3,7 @@ import { getDatasetOptions } from '../ui/pickerOptions'
 import { AppIcon } from './Icon'
 import { RichCombobox } from './RichCombobox'
 
-function DatasetPreview({ values }: { values: number[] }) {
+export function DatasetPreview({ values }: { values: number[] }) {
   const maximum = Math.max(...values)
   return (
     <span className="dataset-preview" aria-hidden="true">

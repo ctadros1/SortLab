@@ -8,7 +8,14 @@ import type {
 } from '../audio/audioTypes'
 import { createAudioSettings, soundPresetList } from '../audio/presets'
 import { useSandboxPlayer } from '../hooks/useSandboxPlayer'
-import { sandboxAmountRestriction, sandboxAmounts, sandboxVisualPresets } from '../sandbox/config'
+import {
+  compatibleSandboxAmount,
+  SANDBOX_MAX_AMOUNT,
+  SANDBOX_MIN_AMOUNT,
+  sandboxAlgorithmById,
+  sandboxAmountRestriction,
+  sandboxVisualPresets,
+} from '../sandbox/config'
 import { sandboxShortcutAction } from '../sandbox/controls'
 import type {
   SandboxBackgroundStyle,
@@ -18,13 +25,19 @@ import type {
   SandboxVisualPresetId,
   SandboxWidthMode,
 } from '../sandbox/types'
-import { sandboxDatasetRegistry } from '../sandbox/datasets'
-import { algorithmById } from '../algorithms/registry'
-import { AppIcon } from './Icon'
+import { AppIcon, ChevronRight } from './Icon'
 import { SandboxAlgorithmPicker } from './SandboxAlgorithmPicker'
+import { SandboxDatasetPicker } from './SandboxDatasetPicker'
 import { Switch } from './Switch'
 
-const sandboxDatasets = sandboxDatasetRegistry
+interface PendingAlgorithmAdjustment {
+  algorithm: string
+  algorithmName: string
+  previousAmount: number
+  nextAmount: number
+  maximum: number
+  powerOfTwo: boolean
+}
 
 function FormatNumber({ value }: { value: number }) {
   return <>{Math.round(value).toLocaleString()}</>
@@ -69,10 +82,18 @@ export function SandboxPage() {
   } = useSandboxPlayer()
   const [interfaceHidden, setInterfaceHidden] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
+  const [pendingAdjustment, setPendingAdjustment] = useState<PendingAlgorithmAdjustment | null>(
+    null,
+  )
   const rootRef = useRef<HTMLElement>(null)
   const locked = status === 'running' || status === 'paused'
   const restriction = sandboxAmountRestriction(preferences.algorithm, preferences.amount)
-  const algorithmName = algorithmById.get(preferences.algorithm)?.name ?? 'Algorithm'
+  const sandboxAlgorithm = sandboxAlgorithmById.get(preferences.algorithm)
+  const algorithmName = sandboxAlgorithm?.name ?? 'Algorithm'
+  const amountMaximum = Math.min(
+    SANDBOX_MAX_AMOUNT,
+    sandboxAlgorithm?.maximum ?? SANDBOX_MAX_AMOUNT,
+  )
 
   const update = updatePreferences
   const updateAudio = useCallback(
@@ -85,6 +106,48 @@ export function SandboxPage() {
       update((current) => ({ ...current, visual: { ...current.visual, ...changes } })),
     [update],
   )
+
+  const changeAmount = useCallback(
+    (requestedAmount: number) => {
+      const amount = compatibleSandboxAmount(preferences.algorithm, requestedAmount)
+      update((current) => ({ ...current, amount }))
+      shuffle()
+    },
+    [preferences.algorithm, shuffle, update],
+  )
+
+  const chooseAlgorithm = useCallback(
+    (algorithm: string) => {
+      const selected = sandboxAlgorithmById.get(algorithm)
+      if (!selected) return
+      const nextAmount = compatibleSandboxAmount(algorithm, preferences.amount)
+      if (nextAmount !== preferences.amount) {
+        setPendingAdjustment({
+          algorithm,
+          algorithmName: selected.name,
+          previousAmount: preferences.amount,
+          nextAmount,
+          maximum: selected.maximum,
+          powerOfTwo: Boolean(selected.powerOfTwo),
+        })
+        return
+      }
+      update((current) => ({ ...current, algorithm }))
+      reset()
+    },
+    [preferences.amount, reset, update],
+  )
+
+  const confirmAlgorithmAdjustment = useCallback(() => {
+    if (!pendingAdjustment) return
+    update((current) => ({
+      ...current,
+      algorithm: pendingAdjustment.algorithm,
+      amount: pendingAdjustment.nextAmount,
+    }))
+    setPendingAdjustment(null)
+    shuffle()
+  }, [pendingAdjustment, shuffle, update])
 
   const toggleFullscreen = useCallback(async () => {
     try {
@@ -107,6 +170,15 @@ export function SandboxPage() {
     document.addEventListener('fullscreenchange', onFullscreen)
     return () => document.removeEventListener('fullscreenchange', onFullscreen)
   }, [])
+
+  useEffect(() => {
+    if (!pendingAdjustment) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPendingAdjustment(null)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [pendingAdjustment])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -188,10 +260,11 @@ export function SandboxPage() {
 
       {!interfaceHidden ? (
         <aside className="sandbox-controls" aria-label="Sandbox controls">
+          <span className="sandbox-controls__handle" aria-hidden="true" />
           <div className="sandbox-controls__heading">
             <div>
               <h1>Sandbox</h1>
-              <small>High-scale canvas playback</small>
+              <small>High-scale sorting playground</small>
             </div>
             <div className="sandbox-heading-actions">
               <button
@@ -213,62 +286,88 @@ export function SandboxPage() {
             </div>
           </div>
 
-          <div className="sandbox-core-grid">
+          <section className="sandbox-section sandbox-section--setup" aria-labelledby="sort-setup">
+            <h2 id="sort-setup">Sort setup</h2>
             <label className="sandbox-field sandbox-field--algorithm">
               <span>Algorithm</span>
               <SandboxAlgorithmPicker
                 value={preferences.algorithm}
-                amount={preferences.amount}
                 disabled={locked}
-                onChange={(algorithm) => {
-                  update((current) => ({ ...current, algorithm }))
-                  reset()
-                }}
+                onChange={chooseAlgorithm}
               />
             </label>
-            <label className="sandbox-field">
+            <label className="sandbox-field sandbox-field--dataset">
               <span>Dataset</span>
-              <select
-                name="sandbox-dataset"
+              <SandboxDatasetPicker
                 value={preferences.dataset}
                 disabled={locked}
-                onChange={(event) => {
-                  const dataset = event.target.value as SandboxPreferences['dataset']
+                onChange={(dataset) => {
                   update((current) => ({ ...current, dataset }))
                   shuffle()
                 }}
-              >
-                {sandboxDatasets.map(([id, name]) => (
-                  <option value={id} key={id}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+              />
             </label>
-            <label className="sandbox-field">
-              <span>Amount</span>
-              <select
+            <label className="sandbox-amount">
+              <span className="sandbox-amount__heading">
+                <span>Amount</span>
+                <small>
+                  Max {amountMaximum.toLocaleString()}
+                  {sandboxAlgorithm?.powerOfTwo ? ' · powers of two' : ''}
+                </small>
+              </span>
+              <span className="sandbox-amount__input">
+                <input
+                  aria-label="Amount"
+                  name="sandbox-amount"
+                  type="number"
+                  inputMode="numeric"
+                  min={SANDBOX_MIN_AMOUNT}
+                  max={amountMaximum}
+                  step="1"
+                  defaultValue={preferences.amount}
+                  disabled={locked}
+                  key={preferences.amount}
+                  onBlur={(event) =>
+                    changeAmount(Number(event.currentTarget.value || SANDBOX_MIN_AMOUNT))
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') event.currentTarget.blur()
+                  }}
+                />
+                <span>values</span>
+              </span>
+              <input
+                aria-label="Amount slider"
                 name="sandbox-amount"
+                type="range"
+                min={SANDBOX_MIN_AMOUNT}
+                max={amountMaximum}
+                step="1"
                 value={preferences.amount}
                 disabled={locked}
-                onChange={(event) => {
-                  const amount = Number(event.target.value)
-                  update((current) => ({ ...current, amount }))
-                  shuffle()
-                }}
-              >
-                {sandboxAmounts.map((amount) => {
-                  const reason = sandboxAmountRestriction(preferences.algorithm, amount)
-                  return (
-                    <option value={amount} disabled={Boolean(reason)} key={amount}>
-                      {amount.toLocaleString()}
-                      {reason ? ' — unavailable' : ''}
-                    </option>
-                  )
-                })}
-              </select>
+                onChange={(event) => changeAmount(Number(event.target.value))}
+              />
+              <span className="sandbox-amount__scale" aria-hidden="true">
+                <small>{SANDBOX_MIN_AMOUNT}</small>
+                <small>{amountMaximum.toLocaleString()}</small>
+              </span>
             </label>
-            <label className="sandbox-field">
+          </section>
+
+          {restriction || error ? (
+            <p className="sandbox-error" role="alert">
+              {restriction ?? error}
+            </p>
+          ) : null}
+          {audioPrompt ? (
+            <button className="sandbox-audio-prompt" onClick={() => void start()}>
+              Enable audio for this session
+            </button>
+          ) : null}
+
+          <section className="sandbox-section sandbox-section--playback" aria-labelledby="playback">
+            <h2 id="playback">Playback</h2>
+            <label className="sandbox-field sandbox-field--speed">
               <span>Speed mode</span>
               <select
                 name="sandbox-speed-mode"
@@ -285,23 +384,6 @@ export function SandboxPage() {
                 <option value="maximum">Maximum</option>
               </select>
             </label>
-          </div>
-
-          {restriction || error ? (
-            <p className="sandbox-error" role="alert">
-              {restriction ?? error}
-            </p>
-          ) : null}
-          {audioPrompt ? (
-            <button className="sandbox-audio-prompt" onClick={() => void start()}>
-              Enable audio for this session
-            </button>
-          ) : null}
-
-          <div className="sandbox-playback" aria-label="Sandbox playback controls">
-            <button className="sandbox-button sandbox-button--secondary" onClick={reset}>
-              <AppIcon name="reset" aria-hidden="true" /> Reset
-            </button>
             <button
               className="sandbox-button sandbox-button--primary"
               onClick={status === 'running' ? pause : () => void start()}
@@ -309,17 +391,22 @@ export function SandboxPage() {
               <AppIcon name={status === 'running' ? 'pause' : 'play'} aria-hidden="true" />
               {status === 'running' ? 'Pause' : status === 'paused' ? 'Resume' : 'Start'}
             </button>
-            <button
-              className="sandbox-button sandbox-button--danger"
-              onClick={stop}
-              disabled={status === 'idle'}
-            >
-              <AppIcon name="stop" aria-hidden="true" /> Stop
-            </button>
-            <button className="sandbox-button sandbox-button--secondary" onClick={shuffle}>
-              <AppIcon name="shuffle" aria-hidden="true" /> Shuffle
-            </button>
-          </div>
+            <div className="sandbox-playback" aria-label="Sandbox playback controls">
+              <button className="sandbox-button sandbox-button--secondary" onClick={reset}>
+                <AppIcon name="reset" aria-hidden="true" /> Reset
+              </button>
+              <button
+                className="sandbox-button sandbox-button--danger"
+                onClick={stop}
+                disabled={status === 'idle'}
+              >
+                <AppIcon name="stop" aria-hidden="true" /> Stop
+              </button>
+              <button className="sandbox-button sandbox-button--secondary" onClick={shuffle}>
+                <AppIcon name="shuffle" aria-hidden="true" /> Shuffle
+              </button>
+            </div>
+          </section>
 
           <div className="sandbox-quick-settings">
             <Switch
@@ -362,7 +449,12 @@ export function SandboxPage() {
           </div>
 
           <details className="sandbox-disclosure">
-            <summary>Audio settings</summary>
+            <summary>
+              <span>
+                <AppIcon name="audio" aria-hidden="true" /> Audio settings
+              </span>
+              <ChevronRight className="sandbox-disclosure__chevron" aria-hidden="true" />
+            </summary>
             <div className="sandbox-settings-grid">
               <label className="sandbox-field">
                 <span>Preset</span>
@@ -513,7 +605,12 @@ export function SandboxPage() {
           </details>
 
           <details className="sandbox-disclosure">
-            <summary>Visual settings</summary>
+            <summary>
+              <span>
+                <AppIcon name="settings" aria-hidden="true" /> Visual settings
+              </span>
+              <ChevronRight className="sandbox-disclosure__chevron" aria-hidden="true" />
+            </summary>
             <div className="sandbox-settings-grid">
               <label className="sandbox-range">
                 <span>
@@ -642,13 +739,64 @@ export function SandboxPage() {
           </details>
 
           <details className="sandbox-disclosure sandbox-shortcuts">
-            <summary>Keyboard shortcuts</summary>
+            <summary>
+              <span>
+                <AppIcon name="keyboard" aria-hidden="true" /> Keyboard shortcuts
+              </span>
+              <ChevronRight className="sandbox-disclosure__chevron" aria-hidden="true" />
+            </summary>
             <p>
               Space play/pause · R reset · S shuffle · M mute · H interface · F fullscreen · ↑/↓
               speed
             </p>
           </details>
         </aside>
+      ) : null}
+
+      {pendingAdjustment ? (
+        <div className="sandbox-dialog-backdrop" role="presentation">
+          <section
+            className="sandbox-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="sandbox-adjustment-title"
+            aria-describedby="sandbox-adjustment-copy"
+          >
+            <span className="sandbox-dialog__icon" aria-hidden="true">
+              <AppIcon name="warning" size={28} />
+            </span>
+            <div className="sandbox-dialog__copy">
+              <h2 id="sandbox-adjustment-title">
+                Adjust amount for {pendingAdjustment.algorithmName}?
+              </h2>
+              <p id="sandbox-adjustment-copy">
+                {pendingAdjustment.powerOfTwo
+                  ? `${pendingAdjustment.algorithmName} supports power-of-two amounts up to ${pendingAdjustment.maximum.toLocaleString()} values.`
+                  : `${pendingAdjustment.algorithmName} supports up to ${pendingAdjustment.maximum.toLocaleString()} values.`}{' '}
+                Selecting it will lower Amount from{' '}
+                {pendingAdjustment.previousAmount.toLocaleString()} to{' '}
+                {pendingAdjustment.nextAmount.toLocaleString()}.
+              </p>
+            </div>
+            <div className="sandbox-dialog__actions">
+              <button
+                type="button"
+                className="sandbox-button sandbox-button--secondary"
+                autoFocus
+                onClick={() => setPendingAdjustment(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="sandbox-button sandbox-button--primary"
+                onClick={confirmAlgorithmAdjustment}
+              >
+                Use {pendingAdjustment.nextAmount.toLocaleString()} values
+              </button>
+            </div>
+          </section>
+        </div>
       ) : null}
 
       {preferences.visual.showStatistics ? (

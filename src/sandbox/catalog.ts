@@ -84,7 +84,10 @@ function catalogGroup(
         `${modeLabels[mode]} ${group.toLowerCase()} model using SortLab’s bounded operation pipeline.`,
       aliases: item.aliases ?? [],
       tags: [modeLabels[mode], ...(item.tags ?? [])],
-      maximum: item.maximum ?? maximum,
+      // The worker pipeline and operation budget can safely support one additional
+      // size tier. Keep the ceilings explicit per algorithm, but give learners
+      // enough room to see a meaningful density change on modern displays.
+      maximum: Math.min(8192, (item.maximum ?? maximum) * 2),
       powerOfTwo: item.powerOfTwo,
       workerKind: item.workerKind ?? workerKind,
       executionMode: mode,

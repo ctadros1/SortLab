@@ -14,6 +14,13 @@ async function chooseSandboxAlgorithm(page: Page, name: RegExp) {
   await page.getByRole('option', { name }).click()
 }
 
+async function setSandboxAmount(page: Page, amount: number) {
+  const input = page.getByRole('spinbutton', { name: 'Amount' })
+  await input.fill(String(amount))
+  await input.press('Enter')
+  await expect(input).toHaveValue(String(amount))
+}
+
 async function chooseVisualizeAlgorithm(page: Page, name: RegExp) {
   await page.getByRole('combobox', { name: 'Algorithm' }).click()
   await page.getByRole('option', { name }).click()
@@ -84,6 +91,78 @@ test('Theme indicator disables motion when reduced motion is requested', async (
   expect(duration).toBeLessThanOrEqual(0.001)
 })
 
+test('Learn opens each algorithm as a dedicated lesson and keeps the SortLab wordmark joined', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#learn')
+
+  const wordmark = page.locator('.brand-wordmark')
+  await expect(wordmark).toHaveText('SortLab')
+  await expect(wordmark).toHaveCSS('gap', '0px')
+  await expect(
+    page.getByRole('heading', { name: 'Understand every sort, one idea at a time' }),
+  ).toBeVisible()
+  await expect(page.locator('.catalog-layout')).toHaveCount(0)
+  await expect(page.locator('.algorithm-detail')).toHaveCount(0)
+  await expect(page.locator('.learn-algorithm-row')).toHaveCount(49)
+
+  const visibleFilters = page.locator('.learn-filters--desktop')
+  await visibleFilters.getByLabel('Type').selectOption('distribution')
+  await expect(page.getByText(/of 49 algorithms/)).toBeVisible()
+  await visibleFilters.getByLabel('Type').selectOption('all')
+  await page.getByRole('searchbox', { name: 'Search algorithms' }).fill('Quick Sort (Hoare)')
+  await page.getByRole('button', { name: /^Quick Sort \(Hoare\)/ }).click()
+
+  await expect(page).toHaveURL(/#learn\/quick-hoare$/)
+  await expect(page.getByRole('heading', { name: 'Quick Sort (Hoare)', level: 1 })).toBeVisible()
+  await expect(page.getByRole('article')).toContainText('Central idea')
+  await expect(page.getByLabel('Quick Sort (Hoare) key facts')).toContainText('O(n log n)')
+  await expect(page.locator('.learn-lesson__icon img')).toHaveJSProperty('complete', true)
+
+  await page.reload()
+  await expect(page).toHaveURL(/#learn\/quick-hoare$/)
+  await expect(page.getByRole('heading', { name: 'Quick Sort (Hoare)', level: 1 })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Learn' }).click()
+  await expect(page).toHaveURL(/#learn$/)
+  await expect(
+    page.getByRole('heading', { name: 'Understand every sort, one idea at a time' }),
+  ).toBeVisible()
+  assertNoConsoleErrors()
+})
+
+test('Learn uses a responsive mobile list and filter disclosure without horizontal overflow', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/#learn')
+
+  await expect(page.getByText('Filters', { exact: true })).toBeVisible()
+  await page.getByText('Filters', { exact: true }).click()
+  await expect(page.locator('.learn-filter-disclosure')).toHaveAttribute('open', '')
+  await expect(page.locator('.learn-filters--mobile').getByLabel('Family')).toBeVisible()
+  await expect(page.locator('.learn-index__header')).toBeHidden()
+  await expect(page.locator('.learn-algorithm-row').first()).toHaveCSS('min-height', '138px')
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  )
+  expect(overflow).toBe(0)
+
+  await page.getByText('Filters', { exact: true }).click()
+  await page.getByRole('searchbox', { name: 'Search algorithms' }).fill('Quick Sort (Hoare)')
+  await page.getByRole('button', { name: /^Quick Sort \(Hoare\)/ }).click()
+  await expect(page.locator('.learn-facts')).toHaveCSS('grid-template-columns', /[\d.]+px [\d.]+px/)
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBe(0)
+  assertNoConsoleErrors()
+})
+
 test('Visualize keeps sound controls intentionally simple', async ({ page }) => {
   const assertNoConsoleErrors = failOnConsoleErrors(page)
   await page.goto('/#visualize')
@@ -141,6 +220,21 @@ test('Visualize uses independent desktop rails and page-level guide scrolling', 
     0,
   )
   expect(await guide.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(72, 0)
+  assertNoConsoleErrors()
+})
+
+test('Visualize keeps every bar the same width across one- and two-digit indices', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/#visualize')
+
+  const widths = await page
+    .locator('.sort-bar')
+    .evaluateAll((bars) => bars.map((bar) => bar.getBoundingClientRect().width))
+  expect(widths.length).toBeGreaterThan(10)
+  expect(Math.max(...widths) - Math.min(...widths)).toBeLessThanOrEqual(0.1)
   assertNoConsoleErrors()
 })
 
@@ -275,6 +369,115 @@ test('Visualize remains usable without horizontal page overflow on mobile', asyn
   assertNoConsoleErrors()
 })
 
+test('Compare keeps synchronized playback moving and supports pause and resume', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/#compare')
+
+  await expect(page.getByRole('combobox', { name: 'First algorithm' })).toContainText(
+    'Optimized Bubble Sort',
+  )
+  await expect(page.getByRole('combobox', { name: 'Second algorithm' })).toContainText(
+    'Quick Sort (Hoare)',
+  )
+
+  const geometry = await page.evaluate(() => {
+    const setup = document.querySelector<HTMLElement>('.compare-setup')!.getBoundingClientRect()
+    const note = document.querySelector<HTMLElement>('.compare-note')!.getBoundingClientRect()
+    const controlHeights = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '.compare-setup__fields .rich-select__trigger, .compare-setup__fields input',
+      ),
+    ).map((control) => control.getBoundingClientRect().height)
+    const panels = Array.from(document.querySelectorAll<HTMLElement>('.compare-panel')).map(
+      (panel) => panel.getBoundingClientRect(),
+    )
+    return {
+      controlHeights,
+      noteLeft: note.left,
+      noteWidth: note.width,
+      setupLeft: setup.left,
+      setupWidth: setup.width,
+      panelWidths: panels.map(({ width }) => width),
+    }
+  })
+  expect(Math.max(...geometry.controlHeights) - Math.min(...geometry.controlHeights)).toBeLessThan(
+    1,
+  )
+  expect(Math.abs(geometry.panelWidths[0] - geometry.panelWidths[1])).toBeLessThan(1)
+  expect(geometry.noteLeft).toBeCloseTo(geometry.setupLeft, 0)
+  expect(geometry.noteWidth).toBeCloseTo(geometry.setupWidth, 0)
+
+  await page.getByLabel('Shared speed', { exact: true }).fill('120')
+  await page.getByRole('button', { name: 'Start comparison' }).click()
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+  await page.waitForTimeout(350)
+  const progressBefore = Number(
+    await page.locator('.compare-panel').first().getAttribute('data-progress'),
+  )
+  await expect
+    .poll(async () =>
+      Number(await page.locator('.compare-panel').first().getAttribute('data-progress')),
+    )
+    .toBeGreaterThan(progressBefore)
+  const synchronizedProgress = await page
+    .locator('.compare-panel')
+    .evaluateAll((panels) => panels.map((panel) => panel.getAttribute('data-progress')))
+  expect(new Set(synchronizedProgress).size).toBe(1)
+
+  await page.getByRole('button', { name: 'Pause' }).click()
+  const pausedProgress = await page
+    .locator('.compare-panel')
+    .evaluateAll((panels) => panels.map((panel) => panel.getAttribute('data-progress')))
+  await page.waitForTimeout(350)
+  await expect(page.locator('.compare-panel').first()).toHaveAttribute(
+    'data-progress',
+    pausedProgress[0]!,
+  )
+
+  await page.getByRole('button', { name: 'Resume' }).click()
+  await expect
+    .poll(async () =>
+      Number(await page.locator('.compare-panel').first().getAttribute('data-progress')),
+    )
+    .toBeGreaterThan(Number(pausedProgress[0]))
+  assertNoConsoleErrors()
+})
+
+test('Compare collapses into a clear single-column mobile workflow', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/#compare')
+
+  const geometry = await page.evaluate(() => {
+    const algorithms = Array.from(
+      document.querySelectorAll<HTMLElement>('.compare-algorithm-field'),
+    ).map((field) => field.getBoundingClientRect())
+    const numbers = Array.from(document.querySelectorAll<HTMLElement>('.compare-number-field')).map(
+      (field) => field.getBoundingClientRect(),
+    )
+    const panels = Array.from(document.querySelectorAll<HTMLElement>('.compare-panel')).map(
+      (panel) => panel.getBoundingClientRect(),
+    )
+    return {
+      overflow: document.documentElement.scrollWidth - window.innerWidth,
+      algorithmWidths: algorithms.map(({ width }) => width),
+      algorithmTops: algorithms.map(({ top }) => top),
+      numberTops: numbers.map(({ top }) => top),
+      panelTops: panels.map(({ top }) => top),
+    }
+  })
+
+  expect(geometry.overflow).toBeLessThanOrEqual(1)
+  expect(Math.abs(geometry.algorithmWidths[0] - geometry.algorithmWidths[1])).toBeLessThan(1)
+  expect(geometry.algorithmTops[1]).toBeGreaterThan(geometry.algorithmTops[0])
+  expect(geometry.numberTops[1]).toBeCloseTo(geometry.numberTops[0], 0)
+  expect(geometry.panelTops[1]).toBeGreaterThan(geometry.panelTops[0])
+  assertNoConsoleErrors()
+})
+
 test('Sandbox renders, completes a large Merge Sort, and exposes advanced audio', async ({
   page,
 }) => {
@@ -284,7 +487,7 @@ test('Sandbox renders, completes a large Merge Sort, and exposes advanced audio'
   await expect(canvas).toBeVisible()
   await expect(canvas).toHaveAttribute('width', /\d+/)
 
-  await page.getByLabel('Amount').selectOption('4096')
+  await setSandboxAmount(page, 4096)
   await chooseSandboxAlgorithm(page, /^Merge Sort/)
   await page.getByLabel('Speed mode').selectOption('maximum')
 
@@ -306,7 +509,7 @@ test('Sandbox renders, completes a large Merge Sort, and exposes advanced audio'
 test('Sandbox pauses, resumes, stops quickly, and cancels on route change', async ({ page }) => {
   const assertNoConsoleErrors = failOnConsoleErrors(page)
   await page.goto('/#sandbox')
-  await page.getByLabel('Amount').selectOption('512')
+  await setSandboxAmount(page, 512)
   await chooseSandboxAlgorithm(page, /^Optimized Bubble Sort/)
   await page.getByLabel('Speed mode').selectOption('realtime')
 
@@ -328,15 +531,26 @@ test('Sandbox pauses, resumes, stops quickly, and cancels on route change', asyn
   assertNoConsoleErrors()
 })
 
-test('Sandbox explains restrictions and keeps hidden controls recoverable', async ({ page }) => {
+test('Sandbox warns before automatically lowering an unsupported amount', async ({ page }) => {
   const assertNoConsoleErrors = failOnConsoleErrors(page)
   await page.goto('/#sandbox')
 
+  await setSandboxAmount(page, 4096)
+
   await page.getByRole('combobox', { name: 'Sandbox algorithm' }).click()
   const restricted = page.getByRole('option', { name: /^Optimized Bubble Sort/ })
-  await expect(restricted).toBeDisabled()
-  await expect(restricted).toContainText('limited to 512 values')
-  await page.keyboard.press('Escape')
+  await expect(restricted).toBeEnabled()
+  await expect(restricted).toContainText('Max 1,024')
+  await restricted.click()
+  const warning = page.getByRole('alertdialog')
+  await expect(warning).toContainText('supports up to 1,024 values')
+  await expect(warning).toContainText('lower Amount from 4,096 to 1,024')
+  await expect(page.getByRole('spinbutton', { name: 'Amount' })).toHaveValue('4096')
+  await page.getByRole('button', { name: 'Use 1,024 values' }).click()
+  await expect(page.getByRole('spinbutton', { name: 'Amount' })).toHaveValue('1024')
+  await expect(page.getByRole('combobox', { name: 'Sandbox algorithm' })).toContainText(
+    'Optimized Bubble Sort',
+  )
 
   await page.getByRole('button', { name: 'Hide interface' }).click()
   await expect(page.locator('.sandbox-page')).toHaveClass(/is-interface-hidden/)
@@ -362,16 +576,24 @@ test('Sandbox exposes the complete searchable catalog and expanded datasets', as
     'Pattern-Defeating Quicksort',
   )
 
-  await page.getByLabel('Dataset').selectOption('normal-distribution')
-  await expect(page.getByLabel('Dataset')).toHaveValue('normal-distribution')
-  await page.getByLabel('Dataset').selectOption('median-three-killer')
-  await expect(page.getByLabel('Dataset')).toHaveValue('median-three-killer')
+  await page.getByRole('combobox', { name: 'Dataset' }).click()
+  const normalDataset = page.getByRole('option', { name: /Normal Distribution/ })
+  await expect(normalDataset.locator('.dataset-preview')).toBeVisible()
+  await normalDataset.click()
+  await expect(page.getByRole('combobox', { name: 'Dataset' })).toContainText('Normal Distribution')
+
+  await page.getByRole('combobox', { name: 'Dataset' }).click()
+  await page.getByPlaceholder('Search Sandbox datasets').fill('median-of-three')
+  await page.getByRole('option', { name: /Median-of-Three Killer/ }).click()
+  await expect(page.getByRole('combobox', { name: 'Dataset' })).toContainText(
+    'Median-of-Three Killer',
+  )
 
   await page.getByRole('combobox', { name: 'Sandbox algorithm' }).click()
   await page.getByPlaceholder('Search Sandbox algorithms').fill('bogobogosort')
   const pathological = page.getByRole('option', { name: /Bogobogosort/ })
-  await expect(pathological).toBeDisabled()
-  await expect(pathological).toContainText('limited to 6 values')
+  await expect(pathological).toBeEnabled()
+  await expect(pathological).toContainText('Max 12')
   assertNoConsoleErrors()
 })
 
@@ -388,6 +610,13 @@ test('Sandbox mobile controls have no horizontal overflow', async ({ page }) => 
   }))
   expect(overflow.document).toBeLessThanOrEqual(1)
   expect(overflow.controls).toBeLessThanOrEqual(1)
-  await expect(page.getByRole('button', { name: 'Start' })).toHaveCSS('min-height', '44px')
+  await expect(page.getByRole('button', { name: 'Start' })).toHaveCSS('min-height', '46px')
+  await expect(page.getByRole('combobox', { name: 'Dataset' }).locator('svg').last()).toBeVisible()
+  await expect(
+    page
+      .locator('details.sandbox-disclosure')
+      .filter({ hasText: 'Audio settings' })
+      .locator('summary .sandbox-disclosure__chevron'),
+  ).toBeVisible()
   assertNoConsoleErrors()
 })

@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-cloudflare/
 coverage/
 .env
 .DS_Store

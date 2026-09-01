@@ -66,6 +66,7 @@ function rankValues(size: number) {
 export function generateSandboxArray(mode: SandboxDatasetId, size: number, seed: number) {
   const random = mulberry32(seed)
   const ranks = rankValues(size)
+  if (mode === 'random') return shuffle(ranks, random)
   if (mode === 'sorted') return ranks
   if (mode === 'reversed') return ranks.reverse()
   if (mode === 'rotated-sorted') {
@@ -168,5 +169,5 @@ export function generateSandboxArray(mode: SandboxDatasetId, size: number, seed:
     }
     return result
   }
-  return Array.from({ length: size }, () => 5 + Math.floor(random() * 95))
+  return shuffle(ranks, random)
 }

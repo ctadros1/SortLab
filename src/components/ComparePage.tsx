@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { materializeEvents } from '../algorithms/engine'
 import { algorithmById, validateAlgorithmInput } from '../algorithms/registry'
 import type { SortEvent } from '../types'
+import { advanceSharedStep, synchronizedEventIndex } from '../ui/compare'
 import { generateArray } from '../utils/array'
-import { BarVisualizer } from './BarVisualizer'
 import { AlgorithmPicker } from './AlgorithmPicker'
-import { AppIcon } from './Icon'
+import { BarVisualizer } from './BarVisualizer'
+import { AppIcon, type AppIconName } from './Icon'
 import { Switch } from './Switch'
 
 interface Run {
@@ -16,19 +17,45 @@ interface Run {
   error?: string
 }
 
+type PlaybackState = 'idle' | 'running' | 'paused'
+
+function runProgress(run?: Run) {
+  if (!run || run.events.length === 0 || run.index < 0) return 0
+  return Math.min(100, Math.round(((run.index + 1) / run.events.length) * 100))
+}
+
+function runState(run: Run | undefined, playback: PlaybackState) {
+  if (!run) return { icon: 'monitor' as AppIconName, label: 'Ready' }
+  if (run.error) return { icon: 'warning' as AppIconName, label: 'Needs attention' }
+  if (run.index >= run.events.length - 1) return { icon: 'check' as AppIconName, label: 'Complete' }
+  if (playback === 'paused') return { icon: 'pause' as AppIconName, label: 'Paused' }
+  if (playback === 'running') return { icon: 'play' as AppIconName, label: 'Running' }
+  return { icon: 'monitor' as AppIconName, label: 'Ready' }
+}
+
 export function ComparePage() {
   const [first, setFirst] = useState('bubble-optimized')
   const [second, setSecond] = useState('quick-hoare')
   const [size, setSize] = useState(32)
   const [seed, setSeed] = useState(42)
   const [speed, setSpeed] = useState(30)
-  const [running, setRunning] = useState(false)
+  const [playback, setPlayback] = useState<PlaybackState>('idle')
   const [synchronized, setSynchronized] = useState(true)
   const [runs, setRuns] = useState<Run[]>([])
   const accumulator = useRef(0)
+  const sharedStep = useRef(-1)
   const source = useMemo(() => generateArray('random', size, seed), [seed, size])
 
+  const resetPlayback = () => {
+    accumulator.current = 0
+    sharedStep.current = -1
+    setRuns([])
+    setPlayback('idle')
+  }
+
   const prepare = () => {
+    accumulator.current = 0
+    sharedStep.current = -1
     const nextRuns = [first, second].map((id) => {
       const validation = validateAlgorithmInput(id, source)
       if (validation) return { id, events: [], index: -1, executionMs: 0, error: validation }
@@ -37,11 +64,25 @@ export function ComparePage() {
       return { id, events: result.events, index: -1, executionMs: performance.now() - start }
     })
     setRuns(nextRuns)
-    setRunning(nextRuns.every((run) => !run.error))
+    setPlayback(nextRuns.every((run) => !run.error) ? 'running' : 'idle')
+  }
+
+  const handlePrimaryAction = () => {
+    if (playback === 'running') {
+      accumulator.current = 0
+      setPlayback('paused')
+      return
+    }
+    if (playback === 'paused') {
+      accumulator.current = 0
+      setPlayback('running')
+      return
+    }
+    prepare()
   }
 
   useEffect(() => {
-    if (!running) return
+    if (playback !== 'running') return
     let frame = 0
     let last = performance.now()
     const tick = (now: number) => {
@@ -52,16 +93,18 @@ export function ComparePage() {
       if (advance > 0) {
         accumulator.current -= advance * interval
         setRuns((current) => {
-          const longest = Math.max(1, ...current.map((run) => run.events.length))
-          const sharedIndex = Math.max(0, ...current.map((run) => run.index)) + advance
+          if (!synchronized) {
+            return current.map((run) => ({
+              ...run,
+              index: Math.min(run.events.length - 1, run.index + advance),
+            }))
+          }
+
+          const longestEventCount = Math.max(1, ...current.map((run) => run.events.length))
+          sharedStep.current = advanceSharedStep(sharedStep.current, advance, longestEventCount)
           return current.map((run) => ({
             ...run,
-            index: synchronized
-              ? Math.min(
-                  run.events.length - 1,
-                  Math.floor((sharedIndex / longest) * run.events.length),
-                )
-              : Math.min(run.events.length - 1, run.index + advance),
+            index: synchronizedEventIndex(sharedStep.current, run.events.length, longestEventCount),
           }))
         })
       }
@@ -69,124 +112,175 @@ export function ComparePage() {
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [running, speed, synchronized])
+  }, [playback, speed, synchronized])
 
   useEffect(() => {
-    if (!running || runs.length === 0 || !runs.every((run) => run.index >= run.events.length - 1))
+    if (
+      playback !== 'running' ||
+      runs.length === 0 ||
+      !runs.every((run) => run.index >= run.events.length - 1)
+    )
       return
-    const timer = window.setTimeout(() => setRunning(false), 0)
+    const timer = window.setTimeout(() => setPlayback('idle'), 0)
     return () => window.clearTimeout(timer)
-  }, [running, runs])
+  }, [playback, runs])
 
-  const completed = runs.length > 0 && runs.every((run) => run.index >= run.events.length - 1)
+  const completed =
+    runs.length > 0 &&
+    runs.every((run) => !run.error && run.events.length > 0 && run.index >= run.events.length - 1)
   const winner = completed ? [...runs].sort((a, b) => a.executionMs - b.executionMs)[0] : undefined
+  const configurationLocked = playback !== 'idle'
+  const longestRun = runs.reduce<Run | undefined>(
+    (longest, run) => (!longest || run.events.length > longest.events.length ? run : longest),
+    undefined,
+  )
+  const synchronizedProgress = runProgress(longestRun)
+  const primaryAction =
+    playback === 'running'
+      ? { icon: 'pause' as AppIconName, label: 'Pause' }
+      : playback === 'paused'
+        ? { icon: 'play' as AppIconName, label: 'Resume' }
+        : { icon: 'play' as AppIconName, label: completed ? 'Run again' : 'Start comparison' }
 
   return (
     <main className="page-shell compare-page" id="main-content">
-      <header className="page-intro">
-        <div>
-          <span className="section-label">Same input, different strategy</span>
-          <h1>Compare algorithms side by side</h1>
-        </div>
-        <p>
-          Synchronized visuals show operation patterns. The winner uses measured JavaScript
-          execution time—not animation duration.
-        </p>
+      <header className="compare-intro">
+        <h1>Compare algorithms</h1>
+        <p>Run two algorithms on the same array and compare how they work.</p>
       </header>
-      <section className="compare-controls" aria-label="Comparison configuration">
-        <div className="control-field">
-          <span>First algorithm</span>
-          <AlgorithmPicker
-            label="First algorithm"
-            value={first}
-            values={source}
-            onChange={setFirst}
-            disabled={running}
-            prominent={false}
-          />
+
+      <section className="compare-setup" aria-label="Comparison configuration">
+        <div className="compare-setup__fields">
+          <div className="control-field compare-algorithm-field">
+            <span>First algorithm</span>
+            <AlgorithmPicker
+              label="First algorithm"
+              value={first}
+              values={source}
+              onChange={(value) => {
+                setFirst(value)
+                resetPlayback()
+              }}
+              disabled={configurationLocked}
+              prominent={false}
+              catalog="all"
+            />
+          </div>
+          <div className="control-field compare-algorithm-field">
+            <span>Second algorithm</span>
+            <AlgorithmPicker
+              label="Second algorithm"
+              value={second}
+              values={source}
+              onChange={(value) => {
+                setSecond(value)
+                resetPlayback()
+              }}
+              disabled={configurationLocked}
+              prominent={false}
+              catalog="all"
+            />
+          </div>
+          <label className="control-field compare-number-field">
+            <span>Array size</span>
+            <input
+              type="number"
+              min="8"
+              max="80"
+              value={size}
+              onChange={(event) => {
+                setSize(Number(event.target.value))
+                resetPlayback()
+              }}
+              disabled={configurationLocked}
+            />
+          </label>
+          <label className="control-field compare-number-field">
+            <span>Seed</span>
+            <input
+              type="number"
+              value={seed}
+              onChange={(event) => {
+                setSeed(Number(event.target.value))
+                resetPlayback()
+              }}
+              disabled={configurationLocked}
+            />
+          </label>
+          <label className="control-field compare-speed-field">
+            <span>
+              Shared speed <strong>{speed} steps/s</strong>
+            </span>
+            <input
+              type="range"
+              min="1"
+              max="120"
+              value={speed}
+              aria-label="Shared speed"
+              onChange={(event) => setSpeed(Number(event.target.value))}
+            />
+          </label>
         </div>
-        <div className="control-field">
-          <span>Second algorithm</span>
-          <AlgorithmPicker
-            label="Second algorithm"
-            value={second}
-            values={source}
-            onChange={setSecond}
-            disabled={running}
-            prominent={false}
+
+        <div className="compare-setup__actions">
+          <Switch
+            checked={synchronized}
+            onChange={(checked) => {
+              setSynchronized(checked)
+              resetPlayback()
+            }}
+            label="Synchronized playback"
+            description="Keep both panels at the same relative progress"
+            disabled={configurationLocked}
           />
+          <div className="compare-actions">
+            <button
+              className="button button--primary button--with-icon"
+              onClick={handlePrimaryAction}
+            >
+              <AppIcon name={primaryAction.icon} aria-hidden="true" /> {primaryAction.label}
+            </button>
+            <button className="button button--secondary button--with-icon" onClick={resetPlayback}>
+              <AppIcon name="reset" aria-hidden="true" /> Reset
+            </button>
+          </div>
         </div>
-        <label>
-          <span>Array size</span>
-          <input
-            type="number"
-            min="8"
-            max="80"
-            value={size}
-            onChange={(event) => setSize(Number(event.target.value))}
-            disabled={running}
-          />
-        </label>
-        <label>
-          <span>Seed</span>
-          <input
-            type="number"
-            value={seed}
-            onChange={(event) => setSeed(Number(event.target.value))}
-            disabled={running}
-          />
-        </label>
-        <label className="range-label">
-          <span>
-            Shared speed <strong>{speed}/s</strong>
-          </span>
-          <input
-            type="range"
-            min="1"
-            max="120"
-            value={speed}
-            onChange={(event) => setSpeed(Number(event.target.value))}
-          />
-        </label>
-        <Switch
-          checked={synchronized}
-          onChange={setSynchronized}
-          label="Synchronized playback"
-          description="Keep both panels at the same relative progress"
-          icon={<AppIcon name="compare" />}
-          disabled={running}
-        />
-        <button
-          className="button button--primary button--with-icon"
-          onClick={prepare}
-          disabled={running}
-        >
-          <AppIcon name="play" aria-hidden="true" /> Start together
-        </button>
-        <button
-          className="button button--secondary button--with-icon"
-          onClick={() => {
-            setRuns([])
-            setRunning(false)
-          }}
-        >
-          <AppIcon name="reset" aria-hidden="true" /> Reset both
-        </button>
       </section>
-      <section className="compare-grid">
+
+      <section className="compare-grid" aria-label="Algorithm comparison">
         {[first, second].map((id, panel) => {
           const run = runs[panel]
           const event = run?.events[run.index]
           const meta = algorithmById.get(id)
+          const progress =
+            synchronized && run && !run.error ? synchronizedProgress : runProgress(run)
+          const state = runState(run, playback)
           return (
-            <article className="compare-panel" key={`${panel}-${id}`}>
-              <header>
+            <article
+              className="compare-panel"
+              data-playback-state={state.label.toLowerCase().replace(' ', '-')}
+              data-progress={progress}
+              key={`${panel}-${id}`}
+            >
+              <header className="compare-panel__header">
                 <div>
                   <span>{meta?.family}</span>
                   <h2>{meta?.name}</h2>
                 </div>
-                <strong>{run ? `${run.executionMs.toFixed(2)} ms` : 'Ready'}</strong>
+                <strong
+                  aria-label={run ? `Measured ${run.executionMs.toFixed(2)} milliseconds` : ''}
+                >
+                  {run ? `${run.executionMs.toFixed(2)} ms` : 'Ready'}
+                </strong>
               </header>
+
+              <div className="compare-panel__progress" aria-live="polite">
+                <span className="compare-panel__state">
+                  <AppIcon name={state.icon} aria-hidden="true" size={16} /> {state.label}
+                </span>
+                <span>{progress}% complete</span>
+              </div>
+
               {run?.error ? (
                 <div className="error-message">{run.error}</div>
               ) : (
@@ -215,7 +309,7 @@ export function ComparePage() {
                   <dd>
                     {run && run.index >= run.events.length - 1
                       ? 'Complete'
-                      : (event?.phase ?? 'Ready')}
+                      : (event?.phase ?? state.label)}
                   </dd>
                 </div>
               </dl>
@@ -223,18 +317,26 @@ export function ComparePage() {
           )
         })}
       </section>
+
       {winner ? (
         <div className="winner-summary" role="status">
-          <strong>Measured execution winner: {algorithmById.get(winner.id)?.name}</strong>
+          <AppIcon name="benchmark" aria-hidden="true" />
           <span>
-            {winner.executionMs.toFixed(2)} ms to generate its complete event stream on this device.
+            <strong>Measured execution winner: {algorithmById.get(winner.id)?.name}</strong>
+            <small>
+              {winner.executionMs.toFixed(2)} ms to generate its event stream on this device.
+            </small>
           </span>
         </div>
       ) : null}
-      <p className="timing-note">
-        A visualizer rewards fewer animation events. It does not reproduce engine-optimized library
-        sorts, cache behavior, or production workloads.
-      </p>
+
+      <aside className="timing-note compare-note">
+        <AppIcon name="info" aria-hidden="true" />
+        <p>
+          Animation shows operation patterns. Execution time measures event generation on this
+          device and does not represent production performance.
+        </p>
+      </aside>
     </main>
   )
 }

@@ -9,13 +9,25 @@ import {
 } from '../algorithms/registry'
 import { AlgorithmPicker } from '../components/AlgorithmPicker'
 import { DatasetPicker } from '../components/DatasetPicker'
+import { SandboxDatasetPicker } from '../components/SandboxDatasetPicker'
 import { MathNotation } from '../components/MathNotation'
 import { RichCombobox } from '../components/RichCombobox'
 import { Switch } from '../components/Switch'
 import { datasetRegistry, searchDatasets } from '../data/datasets'
+import {
+  compatibleSandboxAmount,
+  sandboxAlgorithmById,
+  sandboxAmountRestriction,
+} from '../sandbox/config'
+import { generateSandboxArray } from '../sandbox/datasets'
 import { filterRichOptions, nextEnabledIndex, type RichOption } from '../ui/combobox'
 import { complexityLabel, complexityParts } from '../ui/math'
-import { getAlgorithmOptions, getDatasetOptions } from '../ui/pickerOptions'
+import {
+  getAlgorithmOptions,
+  getCompareAlgorithmOptions,
+  getDatasetOptions,
+} from '../ui/pickerOptions'
+import { advanceSharedStep, synchronizedEventIndex } from '../ui/compare'
 import { getBarDisplayRules, markerKindForEvent, nextSwitchState } from '../ui/visualizer'
 
 describe('picker metadata and search', () => {
@@ -48,6 +60,12 @@ describe('picker metadata and search', () => {
     }
   })
 
+  it('includes comparison-only implementations in the Compare picker catalog', () => {
+    const options = getCompareAlgorithmOptions([4, 2, 3, 1])
+    expect(options.map(({ id }) => id)).toContain('bubble-optimized')
+    expect(options.map(({ id }) => id)).toContain('quick-hoare')
+  })
+
   it('preserves pathological warnings in algorithm options', () => {
     const bogo = getAlgorithmOptions([3, 2, 1]).find((option) => option.id === 'bogo')
     expect(bogo?.algorithm.caution).toBe('pathological')
@@ -64,6 +82,22 @@ describe('picker metadata and search', () => {
     }
     expect(getDatasetOptions().find((option) => option.id === 'custom')?.group).toBe('Your data')
     expect(searchDatasets('ascending').map(({ id }) => id)).toContain('sorted')
+  })
+
+  it('gives every Random Sandbox bar its own rank at high density', () => {
+    const values = generateSandboxArray('random', 4096, 42)
+    expect(values).toHaveLength(4096)
+    expect(new Set(values).size).toBe(4096)
+    expect(Math.min(...values)).toBe(1)
+    expect(Math.max(...values)).toBe(4096)
+  })
+
+  it('uses relaxed ceilings and derives compatible automatic adjustments', () => {
+    expect(sandboxAlgorithmById.get('quick-hoare')?.maximum).toBe(8192)
+    expect(sandboxAlgorithmById.get('bubble-optimized')?.maximum).toBe(1024)
+    expect(sandboxAmountRestriction('bubble-optimized', 2048)).toMatch(/1,024 values/)
+    expect(compatibleSandboxAmount('bubble-optimized', 4096)).toBe(1024)
+    expect(compatibleSandboxAmount('bitonic', 5000)).toBe(4096)
   })
 })
 
@@ -121,6 +155,15 @@ describe('accessible interaction utilities', () => {
     expect(html).not.toContain('picker-icon--dataset')
   })
 
+  it('renders the Sandbox dataset picker with a distribution preview', () => {
+    const html = renderToStaticMarkup(
+      <SandboxDatasetPicker value="normal-distribution" onChange={() => undefined} />,
+    )
+    expect(html).toContain('Normal Distribution')
+    expect(html).toContain('dataset-preview')
+    expect(html).toContain('role="combobox"')
+  })
+
   it('renders a plain switch without reserving an empty icon column', () => {
     const html = renderToStaticMarkup(
       <Switch
@@ -133,6 +176,32 @@ describe('accessible interaction utilities', () => {
     expect(html).toContain('switch-control--plain')
     expect(html).not.toContain('switch-control__icon')
     expect(html).toContain('role="switch"')
+  })
+})
+
+describe('comparison playback', () => {
+  it('advances synchronized runs monotonically without rounding stalls', () => {
+    const longestEventCount = 1_379
+    let sharedStep = -1
+    let previousLongIndex = -1
+
+    for (let frame = 0; frame < 300; frame += 1) {
+      sharedStep = advanceSharedStep(sharedStep, 1, longestEventCount)
+      const longIndex = synchronizedEventIndex(sharedStep, longestEventCount, longestEventCount)
+      const shortIndex = synchronizedEventIndex(sharedStep, 241, longestEventCount)
+
+      expect(longIndex).toBeGreaterThan(previousLongIndex)
+      expect(shortIndex).toBeGreaterThanOrEqual(-1)
+      previousLongIndex = longIndex
+    }
+  })
+
+  it('maps every run to completion at the final shared step', () => {
+    const longestEventCount = 1_379
+    const finalStep = longestEventCount - 1
+
+    expect(synchronizedEventIndex(finalStep, 1_379, longestEventCount)).toBe(1_378)
+    expect(synchronizedEventIndex(finalStep, 241, longestEventCount)).toBe(240)
   })
 })
 

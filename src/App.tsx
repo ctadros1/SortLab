@@ -34,11 +34,13 @@ const themeOptions: Array<{ value: Theme; label: string; icon: AppIconName }> = 
   { value: 'dark', label: 'Dark theme', icon: 'moon' },
 ]
 
+function routeFromHash(): Route {
+  const root = window.location.hash.slice(1).split('/')[0]
+  return root in routeLabels ? (root as Route) : 'visualize'
+}
+
 export default function App() {
-  const [route, setRoute] = useState<Route>(() => {
-    const hash = window.location.hash.slice(1)
-    return hash in routeLabels ? (hash as Route) : 'visualize'
-  })
+  const [route, setRoute] = useState<Route>(routeFromHash)
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem('sortlab-theme') as Theme) || 'system',
   )
@@ -61,12 +63,9 @@ export default function App() {
 
   useEffect(() => {
     const onHashChange = () => {
-      const hash = window.location.hash.slice(1)
-      if (hash in routeLabels) {
-        sortingAudioEngine.stopAll()
-        setRoute(hash as Route)
-        setMenuOpen(false)
-      }
+      sortingAudioEngine.stopAll()
+      setRoute(routeFromHash())
+      setMenuOpen(false)
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
@@ -75,7 +74,7 @@ export default function App() {
   const chooseRoute = (next: Route) => {
     sortingAudioEngine.stopAll()
     setRoute(next)
-    window.history.pushState(null, '', `#${next}`)
+    if (window.location.hash !== `#${next}`) window.location.hash = next
     setMenuOpen(false)
     window.scrollTo({
       top: 0,
@@ -108,7 +107,9 @@ export default function App() {
             <i />
             <i />
           </span>
-          Sort<span>Lab</span>
+          <span className="brand-wordmark">
+            Sort<span>Lab</span>
+          </span>
         </button>
         <nav className={menuOpen ? 'is-open' : ''} aria-label="Primary navigation">
           {routeOrder.map((item) => (

@@ -1,5 +1,5 @@
 import { familyLabels } from '../algorithms/registry'
-import { getAlgorithmOptions } from '../ui/pickerOptions'
+import { getAlgorithmOptions, getCompareAlgorithmOptions } from '../ui/pickerOptions'
 import { AlgorithmIcon, AppIcon } from './Icon'
 import { RichCombobox } from './RichCombobox'
 
@@ -11,6 +11,7 @@ interface Props {
   prominent?: boolean
   label?: string
   portal?: boolean
+  catalog?: 'visualize' | 'all'
 }
 
 export function AlgorithmPicker({
@@ -21,12 +22,13 @@ export function AlgorithmPicker({
   prominent = true,
   label = 'Algorithm',
   portal = false,
+  catalog = 'visualize',
 }: Props) {
   return (
     <RichCombobox
       label={label}
       value={value}
-      options={getAlgorithmOptions(values)}
+      options={catalog === 'all' ? getCompareAlgorithmOptions(values) : getAlgorithmOptions(values)}
       onChange={onChange}
       disabled={disabled}
       prominent={prominent}

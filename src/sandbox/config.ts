@@ -10,14 +10,20 @@ export {
   type SandboxWorkerKind,
 } from './catalog'
 
-export const sandboxAmounts = [64, 128, 256, 512, 1024, 2048, 4096] as const
+export const SANDBOX_MIN_AMOUNT = 16
+export const SANDBOX_MAX_AMOUNT = 8192
+export const sandboxAmounts = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192] as const
+
+export const sandboxAlgorithmById = new Map(
+  sandboxAlgorithms.map((algorithm) => [algorithm.id, algorithm]),
+)
 
 export function isPowerOfTwo(value: number) {
   return value > 0 && (value & (value - 1)) === 0
 }
 
 export function sandboxAmountRestriction(algorithmId: string, amount: number) {
-  const algorithm = sandboxAlgorithms.find((entry) => entry.id === algorithmId)
+  const algorithm = sandboxAlgorithmById.get(algorithmId)
   if (!algorithm) return 'This algorithm is not available in the high-scale Sandbox pipeline.'
   if (amount > algorithm.maximum) {
     return `${algorithm.name} is limited to ${algorithm.maximum.toLocaleString()} values because of its operation count.`
@@ -26,6 +32,14 @@ export function sandboxAmountRestriction(algorithmId: string, amount: number) {
     return 'This sorting network requires a power-of-two amount.'
   }
   return null
+}
+
+export function compatibleSandboxAmount(algorithmId: string, requestedAmount: number) {
+  const algorithm = sandboxAlgorithmById.get(algorithmId)
+  const maximum = Math.min(SANDBOX_MAX_AMOUNT, algorithm?.maximum ?? SANDBOX_MAX_AMOUNT)
+  const clamped = Math.min(maximum, Math.max(SANDBOX_MIN_AMOUNT, Math.round(requestedAmount)))
+  if (!algorithm?.powerOfTwo) return clamped
+  return 2 ** Math.floor(Math.log2(clamped))
 }
 
 export interface SandboxVisualPreset {

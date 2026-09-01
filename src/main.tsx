@@ -4,6 +4,7 @@ import App from './App'
 import './styles/main.css'
 import './styles/redesign.css'
 import './styles/sandbox.css'
+import './styles/learn.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

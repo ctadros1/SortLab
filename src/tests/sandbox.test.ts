@@ -43,9 +43,9 @@ describe('Sandbox algorithm and amount policy', () => {
   })
 
   it('applies complexity-based limits and explains blocked amounts', () => {
-    expect(sandboxAmountRestriction('bubble-optimized', 512)).toBeNull()
-    expect(sandboxAmountRestriction('bubble-optimized', 1024)).toMatch(/limited to 512/i)
-    expect(sandboxAmountRestriction('merge', 4096)).toBeNull()
+    expect(sandboxAmountRestriction('bubble-optimized', 1024)).toBeNull()
+    expect(sandboxAmountRestriction('bubble-optimized', 2048)).toMatch(/limited to 1,024/i)
+    expect(sandboxAmountRestriction('merge', 8192)).toBeNull()
     expect(sandboxAmountRestriction('unknown', 64)).toMatch(/not available/i)
   })
 
@@ -65,8 +65,8 @@ describe('Sandbox algorithm and amount policy', () => {
   })
 
   it('caps pathological algorithms while keeping them discoverable', () => {
-    expect(sandboxAmountRestriction('bogo', 64)).toMatch(/limited to 8/i)
-    expect(sandboxAmountRestriction('bogobogosort', 64)).toMatch(/limited to 6/i)
+    expect(sandboxAmountRestriction('bogo', 64)).toMatch(/limited to 16/i)
+    expect(sandboxAmountRestriction('bogobogosort', 64)).toMatch(/limited to 12/i)
     expect(sandboxAmountRestriction('stooge', 128)).toBeNull()
   })
 })

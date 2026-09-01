@@ -59,7 +59,8 @@ export function BarVisualizer({
                   : (event?.type ?? 'default')
             : 'default'
         const markers: MarkerKind[] = []
-        if (isActive && eventMarker) markers.push(eventMarker)
+        const showEventMarker = !(compact && event?.type === 'markSorted')
+        if (isActive && eventMarker && showEventMarker) markers.push(eventMarker)
         return (
           <div className="bar-slot" data-state={state} key={`${index}-${value}`}>
             <span

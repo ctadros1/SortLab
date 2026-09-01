@@ -152,8 +152,13 @@ code,
   gap: 10px;
   padding: 8px 0;
 }
-.brand > span:last-child {
+.brand-wordmark > span {
   color: var(--blue);
+}
+.brand-wordmark {
+  display: inline-flex;
+  gap: 0;
+  white-space: nowrap;
 }
 .brand-mark {
   height: 24px;
