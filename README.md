@@ -2,21 +2,103 @@
 
 SortLab is an open-source educational sorting algorithm playground for CS1 students. It turns algorithm execution into structured events so students can watch comparisons and writes, step backward and forward, hear value-mapped tones, connect each action to code, and compare algorithms without confusing animation speed with computational performance.
 
-![SortLab desktop interface](docs/design/after/visualize-light-1440x1000.png)
+![Quick Sort paused during a swap in SortLab Visualize dark mode](docs/screenshots/readme/visualize-dark-active.png)
 
-The interface uses an icon-led three-region workspace: compact controls on the left, the sorting
-canvas in the center, and a sticky algorithm guide on the right. At narrower widths the guide and
-controls continue below the canvas without changing the sorting behavior.
-
-Sandbox is a separate high-scale Canvas experience for cinematic, worker-driven runs with up to
-16,384 values for supported algorithms and advanced sound and rendering controls.
-
-![SortLab Sandbox](docs/design/after/sandbox-default-1440x1000.png)
+The guided workspace connects every visible change to narration, statistics, sound, and code. Sandbox scales the same ideas to thousands of Canvas-rendered values with worker-driven playback.
 
 ## Live site
 
-[Open SortLab](https://project.christiantadros.com/sortlab/). The project source is available in
-this repository and the app does not require an account.
+[Open SortLab](https://project.christiantadros.com/sortlab/). The app does not require an account.
+
+## Explore every SortLab page
+
+These screenshots show the current interface across guided study, comparison, reference lessons, measured benchmarks, high-scale playback, and project documentation.
+
+### Visualize an algorithm step by step
+
+Visualize keeps controls, the array, and the algorithm guide visible together. Switch themes, inspect active operations, or search the algorithm catalog without leaving the workspace.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/readme/visualize-light.png" alt="SortLab Visualize page in light mode before playback">
+      <br><sub>Light mode with the generated array, operation legend, statistics, and guided pseudocode.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/readme/algorithm-picker-dark.png" alt="Searchable SortLab algorithm picker in dark mode">
+      <br><sub>Dark-mode algorithm picker with custom icons, traits, complexity, search, and family groups.</sub>
+    </td>
+  </tr>
+</table>
+
+### Compare two algorithms on the same input
+
+Compare synchronizes relative progress while preserving each algorithm’s operations and measured execution time. Its sound crossfader can emphasize either side or keep both balanced.
+
+![SortLab Compare page in light mode with two paused algorithm visualizations](docs/screenshots/readme/compare-light.png)
+
+### Learn the ideas behind each sort
+
+Learn starts with a searchable catalog, then opens each algorithm as a focused lesson with key facts, a central idea, worked examples, and implementation guidance.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/readme/learn-light.png" alt="SortLab Learn algorithm catalog in light mode">
+      <br><sub>Light-mode catalog with family, type, stability, and memory filters.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/readme/learn-detail-dark.png" alt="Quick Sort Hoare lesson in SortLab dark mode">
+      <br><sub>Dark-mode Quick Sort lesson with complexity, traits, steps, and a worked example.</sub>
+    </td>
+  </tr>
+</table>
+
+### Benchmark identical arrays
+
+Benchmark runs warm-ups and copied trials in a Web Worker. The result chart reports observed medians for the current browser and device, not universal rankings.
+
+![SortLab Benchmark page in light mode with completed timing results](docs/screenshots/readme/benchmark-light.png)
+
+### Scale up in Sandbox
+
+Sandbox renders large arrays on Canvas and keeps advanced playback, audio, and visual controls in a focused panel. Dataset previews show each distribution before selection.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/readme/sandbox-dark-complete.png" alt="Completed 1024-value Quick Sort in SortLab Sandbox dark mode">
+      <br><sub>Dark-mode completion state for a 1,024-value worker-driven Quick Sort.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/readme/sandbox-light-dataset-picker.png" alt="SortLab Sandbox dataset picker in light mode">
+      <br><sub>Light-mode dataset picker with live visual previews and searchable distributions.</sub>
+    </td>
+  </tr>
+</table>
+
+### Read how SortLab works
+
+About explains the event model, browser limits, timing methodology, accessibility choices, open-source status, and technical stack.
+
+![SortLab About page in dark mode](docs/screenshots/readme/about-dark.png)
+
+### Use the same tools on a phone
+
+The guided visualizer becomes a single-column lesson, while Sandbox uses a draggable control sheet over the Canvas.
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/readme/mobile-visualize-light.png" alt="SortLab Visualize mobile layout in light mode">
+      <br><sub>Visualize in a compact light-mode phone layout.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/readme/mobile-sandbox-dark.png" alt="SortLab Sandbox mobile layout in dark mode">
+      <br><sub>Sandbox in a compact dark-mode phone layout.</sub>
+    </td>
+  </tr>
+</table>
 
 ## What students can do
 
