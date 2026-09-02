@@ -302,10 +302,6 @@
 }
 
 .about-intro {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
-  align-items: end;
-  gap: 48px;
   padding-bottom: 28px;
   border-bottom: 1px solid var(--border);
 }
@@ -321,36 +317,6 @@
   color: var(--muted);
   font-size: 1rem;
   line-height: 1.65;
-}
-
-.about-intro__principle {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 13px 15px;
-  border-left: 3px solid var(--teal);
-  background: color-mix(in srgb, var(--teal) 7%, transparent);
-}
-
-.about-intro__principle > svg {
-  flex: 0 0 auto;
-  color: var(--teal);
-}
-
-.about-intro__principle strong,
-.about-intro__principle small {
-  display: block;
-}
-
-.about-intro__principle strong {
-  font-size: 0.82rem;
-}
-
-.about-intro__principle small {
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 0.68rem;
-  line-height: 1.4;
 }
 
 .about-columns {
@@ -394,16 +360,14 @@
 }
 
 .about-section h2,
-.about-technical h2,
-.about-note h2 {
+.about-technical h2 {
   margin: 2px 0 7px;
   font-size: 1rem;
   letter-spacing: -0.015em;
 }
 
 .about-section p,
-.about-technical p,
-.about-note p {
+.about-technical p {
   margin: 0;
   color: var(--muted);
   font-size: 0.78rem;
@@ -498,20 +462,6 @@
   color: var(--text);
   font-size: 0.7rem;
   line-height: 1.45;
-}
-
-.about-note {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 13px;
-  padding: 16px;
-  border-left: 3px solid var(--amber);
-  background: color-mix(in srgb, var(--amber) 7%, transparent);
-}
-
-.about-note > svg {
-  margin-top: 3px;
-  color: var(--amber);
 }
 
 .report-dialog-backdrop {

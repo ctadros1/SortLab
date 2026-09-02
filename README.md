@@ -1,28 +1,96 @@
-# SortLab
+<p align="center">
+  <a href="https://project.christiantadros.com/sortlab/">
+    <img src="public/favicon.svg" width="112" height="112" alt="SortLab logo">
+  </a>
+</p>
 
-SortLab is an open-source educational sorting algorithm playground for CS1 students. It turns algorithm execution into structured events so students can watch comparisons and writes, step backward and forward, hear value-mapped tones, connect each action to code, and compare algorithms without confusing animation speed with computational performance.
+<h1 align="center">SortLab</h1>
+
+<p align="center">
+  <strong>See, hear, compare, and understand sorting algorithms.</strong>
+</p>
+
+<p align="center">
+  An open-source learning environment for guided visualization, synchronized comparison, measured benchmarks, and high-scale Canvas playback.
+</p>
+
+<p align="center">
+  <a href="https://project.christiantadros.com/sortlab/">
+    <img src="https://img.shields.io/badge/Open_SortLab-075EE8?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Open SortLab">
+  </a>
+  <a href="https://github.com/ctadros1/sort-lab">
+    <img src="https://img.shields.io/badge/View_source-081226?style=for-the-badge&logo=github&logoColor=white" alt="View source on GitHub">
+  </a>
+</p>
+
+<p align="center">
+  <a href="#-why-sortlab">Features</a> ·
+  <a href="#-product-tour">Product tour</a> ·
+  <a href="#-run-sortlab-locally">Local setup</a> ·
+  <a href="#-project-documentation">Documentation</a> ·
+  <a href="#-contribute">Contribute</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=081226" alt="React 19">
+  <img src="https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript 6">
+  <img src="https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite 8">
+  <img src="https://img.shields.io/badge/Cloudflare-Workers-F38020?style=flat-square&logo=cloudflareworkers&logoColor=white" alt="Cloudflare Workers">
+  <img src="https://img.shields.io/badge/Tested_with-Vitest_+_Playwright-729B1B?style=flat-square&logo=vitest&logoColor=white" alt="Tested with Vitest and Playwright">
+</p>
 
 ![Quick Sort paused during a swap in SortLab Visualize dark mode](docs/screenshots/readme/visualize-dark-active.png)
 
-The guided workspace connects every visible change to narration, statistics, sound, and code. Sandbox scales the same ideas to thousands of Canvas-rendered values with worker-driven playback.
+## ✨ Why SortLab
 
-## Live site
+SortLab converts each algorithm into a structured operation stream. The same stream powers animation, narration, statistics, code highlighting, sound, comparison, and reverse stepping.
 
-[Open SortLab](https://project.christiantadros.com/sortlab/). The app does not require an account.
+<table>
+  <tr>
+    <td width="50%">
+      <h3>🎬 Guided visualization</h3>
+      <p>Follow comparisons, swaps, pivots, writes, ranges, recursion, and finalized values one operation at a time.</p>
+    </td>
+    <td width="50%">
+      <h3>🎧 Operation-aware sound</h3>
+      <p>Hear value-mapped Web Audio tones with bounded polyphony, adaptive density, and click-free envelopes.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>⚖️ Side-by-side comparison</h3>
+      <p>Run two algorithms on the same seeded array with synchronized progress and a balanced sound crossfader.</p>
+    </td>
+    <td width="50%">
+      <h3>📖 Code and explanation</h3>
+      <p>Connect every visible operation to guided pseudocode, complete reference code, narration, and worked examples.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>📊 Measured benchmarks</h3>
+      <p>Compare copied inputs through cancellable Web Worker trials without treating animation time as execution time.</p>
+    </td>
+    <td width="50%">
+      <h3>🧪 High-scale Sandbox</h3>
+      <p>Render thousands of values on Canvas with searchable algorithms, dataset previews, and advanced audiovisual controls.</p>
+    </td>
+  </tr>
+</table>
 
-## Explore every SortLab page
+## 🖼 Product tour
 
-These screenshots show the current interface across guided study, comparison, reference lessons, measured benchmarks, high-scale playback, and project documentation.
+Every primary page supports light, dark, and system themes. The responsive layouts preserve the same algorithms and controls from desktop to phone.
 
 ### Visualize an algorithm step by step
 
-Visualize keeps controls, the array, and the algorithm guide visible together. Switch themes, inspect active operations, or search the algorithm catalog without leaving the workspace.
+Visualize keeps the controls, array, and algorithm guide visible together. Change speed during playback, step in either direction, and inspect the operation that produced the current state.
 
 <table>
   <tr>
     <td width="50%">
       <img src="docs/screenshots/readme/visualize-light.png" alt="SortLab Visualize page in light mode before playback">
-      <br><sub>Light mode with the generated array, operation legend, statistics, and guided pseudocode.</sub>
+      <br><sub>Light mode with generated values, operation legend, statistics, and guided pseudocode.</sub>
     </td>
     <td width="50%">
       <img src="docs/screenshots/readme/algorithm-picker-dark.png" alt="Searchable SortLab algorithm picker in dark mode">
@@ -31,15 +99,15 @@ Visualize keeps controls, the array, and the algorithm guide visible together. S
   </tr>
 </table>
 
-### Compare two algorithms on the same input
+### Compare algorithms on identical input
 
-Compare synchronizes relative progress while preserving each algorithm’s operations and measured execution time. Its sound crossfader can emphasize either side or keep both balanced.
+Compare synchronizes relative progress while preserving each algorithm’s operations and measured execution time. Move the sound crossfader to emphasize either side.
 
 ![SortLab Compare page in light mode with two paused algorithm visualizations](docs/screenshots/readme/compare-light.png)
 
-### Learn the ideas behind each sort
+### Learn each algorithm as a focused lesson
 
-Learn starts with a searchable catalog, then opens each algorithm as a focused lesson with key facts, a central idea, worked examples, and implementation guidance.
+Learn starts with a searchable catalog, then opens each algorithm as a dedicated page with key facts, a central idea, worked examples, and implementation guidance.
 
 <table>
   <tr>
@@ -54,9 +122,9 @@ Learn starts with a searchable catalog, then opens each algorithm as a focused l
   </tr>
 </table>
 
-### Benchmark identical arrays
+### Benchmark copied arrays
 
-Benchmark runs warm-ups and copied trials in a Web Worker. The result chart reports observed medians for the current browser and device, not universal rankings.
+Benchmark runs one warm-up and multiple copied trials in a Web Worker. The chart reports observed medians for the current browser and device, not universal rankings.
 
 ![SortLab Benchmark page in light mode with completed timing results](docs/screenshots/readme/benchmark-light.png)
 
@@ -72,20 +140,20 @@ Sandbox renders large arrays on Canvas and keeps advanced playback, audio, and v
     </td>
     <td width="50%">
       <img src="docs/screenshots/readme/sandbox-light-dataset-picker.png" alt="SortLab Sandbox dataset picker in light mode">
-      <br><sub>Light-mode dataset picker with live visual previews and searchable distributions.</sub>
+      <br><sub>Light-mode dataset picker with visual previews and searchable distributions.</sub>
     </td>
   </tr>
 </table>
 
-### Read how SortLab works
+### Inspect the project’s design and limits
 
-About explains the event model, browser limits, timing methodology, accessibility choices, open-source status, and technical stack.
+About explains the event model, browser limits, timing methodology, accessibility choices, source availability, and technical stack.
 
 ![SortLab About page in dark mode](docs/screenshots/readme/about-dark.png)
 
-### Use the same tools on a phone
+### Continue on a phone
 
-The guided visualizer becomes a single-column lesson, while Sandbox uses a draggable control sheet over the Canvas.
+The guided visualizer becomes a single-column lesson. Sandbox uses a draggable control sheet over the Canvas.
 
 <table>
   <tr>
@@ -100,134 +168,128 @@ The guided visualizer becomes a single-column lesson, while Sandbox uses a dragg
   </tr>
 </table>
 
-## What students can do
+## 🧭 Explore the learning tools
 
-- Visualize comparisons, swaps, pivots, ranges, merges, heap operations, bucket assignments, writes, and finalized values using color plus patterns and markers.
-- Generate random, nearly sorted, reversed, sorted, few-unique, duplicate-heavy, sawtooth, shuffled-group, or custom integer arrays.
-- Reproduce an array with a seed and reuse it across comparisons.
-- Start, pause, resume, stop, reset, step backward, step forward, and jump to either end.
-- Change speed while a run is active.
-- Enable a clean-room Web Audio audibilization engine with value-mapped pitch, bounded polyphony,
-  click-free envelopes, automatic gain normalization, and adaptive density.
-- Keep Visualize focused with only Sound, Volume, and Classic / Soft / Minimal presets.
-- Open Sandbox for 16–16,384 Canvas-rendered values, worker-driven playback, fullscreen and hidden
-  interface modes, six visual presets, and advanced audio controls.
-- Read deterministic narration, live operation counters, recursion depth, phase, JavaScript execution time, and pseudocode highlighting.
-- Compare two algorithms on the same array with synchronized playback and a measured execution summary.
-- Explore 44 curated teaching algorithms in Visualize and search the complete 200-plus algorithm
-  Sandbox library with explicit Native, Conceptual, Simulated, or Experimental labels.
-- Run cancellable, warm-up-based Web Worker benchmarks with identical copied inputs and median results.
-- Switch between light, dark, and system themes.
+The five product areas share seeded datasets, algorithm metadata, semantic states, and accessible controls.
 
-## Pickers and controls
+| Area          | Purpose                                | Highlights                                                                      |
+| ------------- | -------------------------------------- | ------------------------------------------------------------------------------- |
+| **Visualize** | Study one algorithm closely            | Reverse stepping, narration, statistics, sound, pseudocode, complete code       |
+| **Compare**   | Contrast two strategies                | Shared input, synchronized progress, measured generation time, audio crossfader |
+| **Learn**     | Build conceptual understanding         | Searchable catalog, complexity, traits, examples, mistakes, use cases           |
+| **Benchmark** | Observe unanimated execution           | Warm-up, copied arrays, repeated trials, medians, cancellation                  |
+| **Sandbox**   | Explore scale and audiovisual patterns | Canvas rendering, worker playback, 200-plus entries, advanced controls          |
 
-The Algorithm field is a searchable custom combobox rather than a native browser menu. Use Up/Down
-Arrow to move, Home/End to jump, Enter to select, Escape to close, or begin typing while the field
-has focus. Focus returns to the trigger after the list closes.
+### Generated datasets
 
-Algorithms are grouped as Exchange, Selection, Insertion, Merge, Partition / quick, Heap-based,
-Distribution, Network, Hybrid, and Novelty and impractical sorts. Each option includes its local
-Lucide motif, teaching description, family, important traits, complexity, and any safety warning.
-Search matches names, aliases, families, and teaching terms. Incompatible choices remain visible
-with their constraint explained.
+Use seeded random values or choose distributions that reveal different algorithm behavior:
 
-The Dataset picker omits search because its option set is short. Each option uses a six-bar preview,
-text label and description, and a check state—without a repeated inline icon. Binary preferences
-use accessible switches with visible on/off state; speed and volume remain labeled sliders.
-Playback uses labeled icon buttons, and the primary button changes from Start to Pause to Resume as
-the player state changes.
+- Random, nearly sorted, reversed, and sorted
+- Few unique values, many duplicates, and all equal
+- Sawtooth and grouped distributions
+- Custom integer arrays in guided views
 
-## Algorithm guide
+### Languages in the algorithm guide
 
-The desktop Visualize controls form an independently scrolling left rail. The right Algorithm Guide
-fills the viewport below the header while leaving wheel scrolling with the main document. Both rails
-return to normal document flow on narrower screens.
+The guided code view supports:
 
-The Code tab supports Pseudocode, C / C++, Java, Python, and TypeScript. It uses aligned
-line numbers, lightweight token styling, a single active-line marker, and a live explanation. The
-selected language is saved locally, and changing languages during playback preserves the active
-semantic operation. The Explain tab summarizes the current phase and operation, invariant, key
-thing to notice, worked example, and common mistake.
+`Pseudocode` · `C / C++` · `Java` · `Python` · `TypeScript`
 
-Event progress is a non-interactive, bounded milestone display rather than a seek control. The
-legend places labels before their matching state symbols and exposes only meaningful bar states.
-The compact guide presents Worst, Average, and Best complexity followed by Stable, In place, and
-Adaptive traits; space complexity remains available in Learn. Values use a shared semantic renderer
-with `<var>` and `<sup>` so notation such as O(n²), O(n log n), and O(d(n + b)) remains readable to
-assistive technology and in both themes. See [`docs/visualize.md`](docs/visualize.md) for extension
-and accessibility details.
+## 🧠 Algorithm coverage
 
-## Visualize keyboard shortcuts
+Learn includes 49 curated teaching algorithms. Sandbox expands the catalog to more than 200 named and categorized entries, with clear Native, Conceptual, Simulated, or Experimental labels.
 
-| Key         | Action                  |
-| ----------- | ----------------------- |
-| Space       | Start, pause, or resume |
-| Left Arrow  | Previous event          |
-| Right Arrow | Next event              |
-| R           | Reset                   |
-| S           | Shuffle/regenerate      |
-| M           | Toggle sound            |
-| Escape      | Stop                    |
+<details>
+  <summary><strong>Introductory, exchange, selection, and insertion sorts</strong></summary>
+  <br>
+  Bubble Sort, Cocktail Shaker Sort, Odd–Even Sort, Comb Sort, Gnome Sort, Selection Sort, Double Selection Sort, Insertion Sort, Binary Insertion Sort, Shell Sort, and Library Sort.
+</details>
 
-Keyboard shortcuts do not fire while focus is inside an input, button, or textarea. Every icon-only
-theme action has an accessible name and tooltip; the page also includes a skip link, visible focus,
-tab semantics, labeled groups, screen-reader operation updates, and reduced-motion support.
+<details>
+  <summary><strong>Efficient comparison and hybrid sorts</strong></summary>
+  <br>
+  Merge Sort, Bottom-Up Merge Sort, Natural Merge Sort, Quick Sort variants, Heap Sort, Smoothsort, TimSort-inspired, and IntroSort-inspired implementations.
+</details>
 
-Sandbox adds `H` for interface visibility, `F` for fullscreen, and Up/Down Arrow for speed. Its
-controls remain recoverable with a visible Show controls button and Escape restores the interface
-before leaving fullscreen.
+<details>
+  <summary><strong>Distribution, network, specialized, and novelty sorts</strong></summary>
+  <br>
+  Counting Sort, Pigeonhole Sort, Bucket Sort, Radix variants, American Flag Sort, Flashsort, Cycle Sort, Pancake Sort, Strand Sort, Tree Sort, Tournament Sort, Patience Sort, Bitonic Sort, Batcher Odd–Even Merge Sort, and bounded novelty demonstrations.
+</details>
 
-## Supported algorithms
+Educational approximations are labeled where their behavior differs from a production library or formal optimized implementation. SortLab does not claim instruction-for-instruction parity with Python, Java, V8, or the C++ standard library.
 
-### Introductory and exchange/insertion sorts
+## 🏗 Technical architecture
 
-Bubble Sort, Cocktail Shaker Sort, Odd–Even Sort, Comb Sort, Gnome Sort, Selection Sort, Double
-Selection Sort, Insertion Sort, Binary Insertion Sort, Shell Sort, and Library Sort.
+SortLab is a client application with an edge Worker for static delivery and bug reports.
 
-### Efficient comparison and hybrid sorts
+```text
+Algorithm generators
+        │
+        ▼
+Normalized operation stream
+        │
+        ├── Visual state and reverse stepping
+        ├── Narration and code highlighting
+        ├── Statistics and progress
+        └── Web Audio scheduling
 
-Merge Sort, Bottom-Up Merge Sort, Natural Merge Sort, Quick Sort, Three-Way Quick Sort, Dual-Pivot
-Quicksort, Heap Sort, Smoothsort, Timsort, and Introsort.
+High-scale algorithms ──► Web Worker ──► Canvas 2D renderer
+Benchmarks            ──► Web Worker ──► Median result chart
+```
 
-### Distribution sorts
+| Layer                 | Technology                                    |
+| --------------------- | --------------------------------------------- |
+| Interface             | React 19, TypeScript, semantic HTML           |
+| Build                 | Vite 8                                        |
+| Guided visualization  | DOM bars with patterns and markers            |
+| Sandbox visualization | Canvas 2D with worker-driven playback         |
+| Audio                 | Web Audio API with operation-aware scheduling |
+| Testing               | Vitest and Playwright                         |
+| Delivery              | Cloudflare Workers static assets              |
 
-Counting Sort, Pigeonhole Sort, Bucket Sort, Radix Sort (LSD), Radix Sort (MSD), Binary Radix Sort,
-American Flag Sort, and Flashsort.
+## ♿ Accessibility
 
-### Specialized, network, and novelty sorts
+SortLab treats accessibility as part of the interaction model:
 
-Cycle Sort, Pancake Sort, Strand Sort, Tree Sort, Tournament Sort, Patience Sort, Bitonic Sort,
-Batcher Odd–Even Merge Sort, simulated Parallel Merge and Sample Sort, Bogo Sort, Stooge Sort,
-Slowsort, simulated Sleep Sort, and simulated Bead Sort.
+- Semantic labels and visible focus across every control
+- Keyboard navigation for pickers, playback, themes, and Sandbox tools
+- Patterns, markers, text, and sound that avoid color-only meaning
+- Light, dark, and system themes with reduced-motion support
+- Screen-reader operation updates and structured complexity notation
+- Responsive layouts without horizontal page overflow
 
-The TimSort, IntroSort, MSD Radix, Tournament, Batcher, and Bogo implementations are explicitly labeled educational approximations where their teaching-oriented behavior differs from a production library or formal optimized implementation. No claim is made that they match Python, Java, V8, or the C++ standard library.
+### Keyboard shortcuts
 
-## Safety and performance limits
+| Key                         | Visualize               | Sandbox                                 |
+| --------------------------- | ----------------------- | --------------------------------------- |
+| <kbd>Space</kbd>            | Start, pause, or resume | Start, pause, or resume                 |
+| <kbd>←</kbd> / <kbd>→</kbd> | Previous or next event  | Change playback speed                   |
+| <kbd>R</kbd>                | Reset                   | Reset                                   |
+| <kbd>S</kbd>                | Shuffle                 | Shuffle                                 |
+| <kbd>M</kbd>                | Toggle sound            | Toggle sound                            |
+| <kbd>H</kbd>                | Not available           | Hide or show controls                   |
+| <kbd>F</kbd>                | Not available           | Enter or leave fullscreen               |
+| <kbd>Esc</kbd>              | Stop                    | Restore controls, then leave fullscreen |
 
-- Normal visual runs: maximum 120 values; the UI defaults to 32.
-- Counting and Pigeonhole Sort: value range capped at 5,000.
-- Bitonic and Batcher network views: power-of-two sizes only, up to 128.
-- Stooge Sort: maximum 30; recommended 12.
-- Slow Sort: maximum 22; recommended 10.
-- Bogo Sort: maximum 8; recommended 6. A bounded shuffle attempt count falls back to Insertion Sort so cancellation and completion remain safe.
-- Stored event history is capped at 250,000 events. Every event carries a bounded array snapshot, making previous-step behavior exact and fast for visualization-sized arrays.
-- Benchmark mode supports up to 50,000 values and skips quadratic/pathological choices above 5,000.
-- Sandbox supports 16–16,384 values, with an explicit per-algorithm maximum shown in the picker.
-  Efficient worker-backed sorts receive the largest limits; quadratic, network, and novelty sorts
-  use lower safety caps and remain protected by operation and time budgets.
+Shortcuts do not fire while focus is inside an input, button, or text area.
 
-The visualizer materializes bounded event streams so reverse stepping is immediate. The benchmark worker uses unanimated implementations, a warm-up, copied identical arrays, multiple trials, median display, and cancellation checkpoints. Results remain device-, browser-, JIT-, workload-, and implementation-specific.
+## 🚀 Run SortLab locally
 
-## Local development
-
-Requires Node.js 22 or later.
+SortLab requires Node.js 22 or later.
 
 ```bash
+git clone https://github.com/ctadros1/sort-lab.git
+cd sort-lab
 npm ci
 npm run dev
 ```
 
-Quality gates:
+Vite prints the local address after startup. Open that address in a modern browser.
+
+### Quality checks
+
+Run the full local quality suite before submitting a change:
 
 ```bash
 npm run format:check
@@ -239,80 +301,64 @@ npm run build
 npm audit
 ```
 
-## Production and Arcane deployment
+## 🗂 Project structure
 
-Arcane watches `/srv/docker/projects`, so the on-disk Compose file is the source of truth.
+The repository separates algorithms, interfaces, workers, and documentation so each area can evolve without duplicating metadata.
 
-```bash
-cd /srv/docker/projects/sorting-playground
-docker compose config
-docker compose build
-docker compose up -d
-docker compose ps
+```text
+src/
+├── algorithms/      # Guided implementations and shared registry
+├── audio/           # Web Audio engine and scheduling
+├── benchmark/       # Unanimated benchmark worker
+├── components/      # Visualize, Compare, Learn, Benchmark, and About
+├── sandbox/         # High-scale renderer and algorithm catalog
+├── styles/          # Shared, responsive, and product-specific styles
+└── tests/           # Unit and component tests
+
+tests/browser/       # Playwright interaction and performance flows
+cloudflare/          # Worker entry point
+docs/                # Architecture, testing, deployment, and feature guides
+public/              # Brand, metadata, and algorithm icon assets
 ```
 
-The production image is a multi-stage Node build served by unprivileged Nginx on container port 8080. Compose maps only `192.168.75.59:8787`, drops Linux capabilities, forbids privilege escalation, uses a read-only root filesystem, gives Nginx a small temporary filesystem, rotates logs, and attaches an isolated project bridge.
+## 📚 Project documentation
 
-## Updating
+Use the focused guides when you need implementation detail:
 
-1. Create a backup before changing deployed source.
-2. Update files in `/srv/docker/projects/sorting-playground`.
-3. Run all quality gates.
-4. Rebuild and recreate only this project.
+| Guide                                | Covers                                                      |
+| ------------------------------------ | ----------------------------------------------------------- |
+| [Architecture](docs/architecture.md) | Event flow, state boundaries, workers, and rendering        |
+| [Algorithms](docs/algorithms.md)     | Registry metadata, implementation rules, and constraints    |
+| [Visualize](docs/visualize.md)       | Guided workspace, code mapping, states, and accessibility   |
+| [Sandbox](docs/sandbox.md)           | High-scale rendering, limits, controls, and worker playback |
+| [Audio engine](docs/audio-engine.md) | Pitch mapping, density, envelopes, gain, and voice limits   |
+| [Testing](docs/testing.md)           | Unit, browser, performance, and regression coverage         |
+| [Deployment](docs/deployment.md)     | Production build, health checks, backup, and rollback       |
+
+## 🤝 Contribute
+
+Contributions should preserve deterministic input, accurate operation metadata, accessibility, cancellation, and bounded browser work.
+
+1. Create a focused branch from `main`.
+2. Add or update tests with the implementation.
+3. Run the quality checks.
+4. Open a pull request that explains the user-visible change and its validation.
+
+For a new algorithm, update the generator, centralized registry metadata, icon assignment, input validation, code-line mapping, and focused tests. For a new dataset, add its typed metadata, generator, preview pattern, search terms, and seeded-output coverage.
+
+## 🌐 Deployment
+
+The public site runs from Cloudflare Workers static assets at [project.christiantadros.com/sortlab](https://project.christiantadros.com/sortlab/).
 
 ```bash
-cd /srv/docker/projects/sorting-playground
-docker compose build
-docker compose up -d --force-recreate
-docker compose ps
-curl -fsS http://192.168.75.59:8787/healthz
+npm run build:cloudflare
+npm run deploy:cloudflare
 ```
 
-## Rollback
+Review the [deployment guide](docs/deployment.md) before changing production or a self-hosted installation.
 
-Stop the current project, restore a known source archive into the same directory without restoring `.env`, review `.env`, then rebuild:
-
-```bash
-cd /srv/docker/projects/sorting-playground
-docker compose down
-tar -xzf /srv/docker/backups/<sorting-playground-backup>.tar.gz -C /srv/docker/projects/sorting-playground
-docker compose config
-docker compose build
-docker compose up -d
-```
-
-Never delete the current project before confirming the archive contents. Keep `.env` outside archives and preserve it separately with restricted permissions when changing deployment values.
-
-## Adding an algorithm
-
-1. Implement a generator in `src/algorithms/engine.ts`. It must mutate only its local working copy and yield structured, snapshot-backed events with accurate counters, narration, phase, and `codeLine` identifiers.
-2. Add it to `algorithmImplementations` using a stable ID.
-3. Register exactly one centralized metadata entry in `src/algorithms/registry.ts` with complexity, traits, restrictions, size limits, pseudocode, explanations, use cases, disadvantages, comparisons, implementation notes, and common mistakes.
-4. Assign one typed motif in `algorithmIconAssignments`. Reuse the small vocabulary in
-   `src/components/Icon.tsx`; do not introduce a one-off icon library or decorative illustration.
-5. Ensure every yielded `codeLine` maps to an appropriate pseudocode line or intentionally uses a documented generic operation.
-6. Add or adjust input validation in `validateAlgorithmInput`.
-7. Run the property-style catalog test and add focused tests for special constraints.
-8. Verify picker search, comparison mode, reverse stepping, narration, counters, patterns,
-   dark/light themes, and mobile rendering.
-
-## Adding a dataset
-
-1. Add one typed entry to `src/data/datasets.ts` with an ID, name, description, icon ID, six-value
-   preview, search terms, and any constraint copy.
-2. Add the generator branch in `src/utils/array.ts` when the dataset is generated rather than custom.
-3. Provide a compact preview pattern; do not add a repeated icon beside the Dataset text label.
-4. Test metadata completeness, seeded output, picker keyboard selection, and the 390px layout.
-
-## Troubleshooting
-
-- **Container is unhealthy:** run `docker compose logs --tail=200 web` and confirm the read-only/temp-file configuration is intact.
-- **Port will not bind:** run `sudo ss -lntup` and `docker ps --format '{{.Names}} {{.Ports}}'`; choose a new unused high port in `.env`.
-- **Arcane does not show the project:** confirm `compose.yaml` is directly under `/srv/docker/projects/sorting-playground`, wait for the filesystem watcher, then refresh Arcane. Do not edit Arcane’s database.
-- **No sound:** click a playback control first. Browsers require a user gesture before Web Audio can start.
-- **Network sort error:** use a power-of-two size such as 8, 16, 32, or 64.
-- **Counting Sort error:** narrow the maximum-minus-minimum value range to 5,000 or less.
-- **Benchmark feels different between runs:** increase trials and close unrelated workloads; the result is still an observation, not a universal ranking.
-
-More detail is available in `docs/architecture.md`, `docs/algorithms.md`,
-`docs/audio-engine.md`, `docs/sandbox.md`, `docs/deployment.md`, and `docs/testing.md`.
+<p align="center">
+  <a href="https://project.christiantadros.com/sortlab/">Open SortLab</a> ·
+  <a href="https://github.com/ctadros1/sort-lab/issues">Report an issue</a> ·
+  <a href="#sortlab">Back to top</a>
+</p>

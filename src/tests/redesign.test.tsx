@@ -206,9 +206,11 @@ describe('accessible interaction utilities', () => {
     )
     expect(about).toContain('Open source and transparent')
     expect(about).not.toContain('local-first')
+    expect(about).not.toContain('Built for understanding')
+    expect(about).not.toContain('An educational model, clearly labeled')
     expect(footer).toContain('Sort<span>Lab</span>')
     expect(footer).toContain('Report Bug')
-    expect(footer).toContain('https://github.com/ctadros1/sorting-playground')
+    expect(footer).toContain('https://github.com/ctadros1/sort-lab')
   })
 })
 

@@ -20,13 +20,6 @@ export function AboutPage() {
             inspect—without hiding the mechanics behind a single animated result.
           </p>
         </div>
-        <span className="about-intro__principle">
-          <AppIcon name="check" aria-hidden="true" />
-          <span>
-            <strong>Built for understanding</strong>
-            <small>Every animation is driven by an explicit algorithm operation.</small>
-          </span>
-        </span>
       </header>
 
       <div className="about-columns">
@@ -159,18 +152,6 @@ export function AboutPage() {
                 </div>
               ))}
             </dl>
-          </section>
-
-          <section className="about-note">
-            <AppIcon name="info" aria-hidden="true" />
-            <div>
-              <h2>An educational model, clearly labeled</h2>
-              <p>
-                Conceptual or fixed-schedule demonstrations are marked in their picker tooltips.
-                Full reference implementations are available in Visualize and Compare when an
-                implementation is supported.
-              </p>
-            </div>
           </section>
         </div>
       </div>
