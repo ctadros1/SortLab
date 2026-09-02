@@ -67,6 +67,7 @@ describe('Sandbox algorithm and amount policy', () => {
   })
 
   it('scales operation estimates and playback batches by mode', () => {
+    expect(defaultSandboxPreferences.speedMode).toBe('realtime')
     expect(estimateSandboxOperations('bubble-optimized', 256)).toBeGreaterThan(
       estimateSandboxOperations('merge', 256),
     )

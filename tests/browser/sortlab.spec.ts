@@ -163,6 +163,59 @@ test('Learn uses a responsive mobile list and filter disclosure without horizont
   assertNoConsoleErrors()
 })
 
+test('Learn complexity chart uses one accurate shared scale with accessible source values', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#learn')
+
+  const chart = page.getByRole('img', { name: 'Representative algorithm growth classes' })
+  await expect(chart).toBeVisible()
+  await expect(chart.locator('.growth-line')).toHaveCount(7)
+  await expect(chart.locator('.growth-line').first()).toHaveAttribute('data-end-value', '1')
+  await expect(page.getByText('Every curve uses the same log-scaled axis')).toBeVisible()
+  await expect(page.getByText('n! = 3,628,800')).toBeVisible()
+
+  const endpoints = await chart
+    .locator('.growth-line')
+    .evaluateAll((lines) => lines.map((line) => Number(line.getAttribute('data-end-value'))))
+  expect(endpoints).toEqual([1, Math.log2(10), 10, 10 * Math.log2(10), 100, 1024, 3_628_800])
+  expect(new Set(endpoints).size).toBe(7)
+  assertNoConsoleErrors()
+})
+
+test('SEO metadata and generated brand assets are complete', async ({ page, request }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#visualize')
+
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    'https://project.christiantadros.com/sortlab/',
+  )
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    'content',
+    'https://project.christiantadros.com/sortlab/social-share.png',
+  )
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    'content',
+    'summary_large_image',
+  )
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', '/site.webmanifest')
+
+  for (const path of [
+    '/favicon.ico',
+    '/favicon.svg',
+    '/apple-touch-icon.png',
+    '/site.webmanifest',
+    '/social-share.png',
+    '/robots.txt',
+    '/sitemap.xml',
+  ]) {
+    expect((await request.get(path)).ok(), path).toBe(true)
+  }
+  assertNoConsoleErrors()
+})
+
 test('Visualize keeps sound controls intentionally simple', async ({ page }) => {
   const assertNoConsoleErrors = failOnConsoleErrors(page)
   await page.goto('/#visualize')
@@ -439,7 +492,32 @@ test('Footer, About, and the protected bug-report flow form one compact product 
   await dialog
     .getByLabel('What went wrong?')
     .fill('The selected algorithm panel did not update after I changed the dataset.')
-  await dialog.getByRole('button', { name: 'Send report' }).click()
+  const sendReport = dialog.getByRole('button', { name: 'Send report' })
+  const sendReportGeometry = await sendReport.evaluate((button) => {
+    const icon = button.querySelector('svg')!.getBoundingClientRect()
+    const textNode = [...button.childNodes].find(
+      (node) => node.nodeType === Node.TEXT_NODE && node.textContent?.trim(),
+    )!
+    const textRange = document.createRange()
+    textRange.selectNodeContents(textNode)
+    const text = textRange.getBoundingClientRect()
+    const bounds = button.getBoundingClientRect()
+    return {
+      iconCenter: icon.top + icon.height / 2,
+      textCenter: text.top + text.height / 2,
+      gap: text.left - icon.right,
+      topSpace: Math.min(icon.top, text.top) - bounds.top,
+      bottomSpace: bounds.bottom - Math.max(icon.bottom, text.bottom),
+    }
+  })
+  expect(
+    Math.abs(sendReportGeometry.iconCenter - sendReportGeometry.textCenter),
+  ).toBeLessThanOrEqual(1)
+  expect(sendReportGeometry.gap).toBeGreaterThanOrEqual(8)
+  expect(
+    Math.abs(sendReportGeometry.topSpace - sendReportGeometry.bottomSpace),
+  ).toBeLessThanOrEqual(1)
+  await sendReport.click()
   await expect(dialog.getByRole('heading', { name: 'Report received' })).toBeVisible()
   expect(submitted).toMatchObject({ page: 'about', token: 'browser-test-token' })
   assertNoConsoleErrors()
@@ -752,10 +830,11 @@ test('Sandbox light mode uses light panels, dark-blue bars, and clipped dataset 
 
   const pace = page.getByLabel('Animation pace')
   await expect(pace.locator('option')).toHaveText([
-    'Detailed (slowest)',
-    'Fast (recommended)',
+    'Detailed (recommended)',
+    'Fast (quicker)',
     'Maximum (fastest)',
   ])
+  await expect(pace).toHaveValue('realtime')
   await pace.selectOption('realtime')
   await expect(page.locator('#sandbox-speed-help')).toHaveText(
     'Small batches show the most sorting detail.',
@@ -875,6 +954,94 @@ test('Sandbox playback and quick settings stay aligned at desktop and phone widt
   expect(Math.abs(phone.labels[0].top - phone.labels[1].top)).toBeLessThanOrEqual(1)
   expect(Math.abs(phone.controls[0].centerY - phone.controls[1].centerY)).toBeLessThanOrEqual(1)
   expect(phone.overflow).toBe(0)
+  assertNoConsoleErrors()
+})
+
+test('Sandbox centers one algorithm limit on desktop and hides it on mobile', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  const readAlignment = () =>
+    page.getByRole('combobox', { name: 'Sandbox algorithm' }).evaluate((trigger) => {
+      const triggerBounds = trigger.getBoundingClientRect()
+      const limit = trigger.querySelector('.sandbox-picker-selection__limit')!
+      const limitBounds = limit.getBoundingClientRect()
+      return {
+        triggerCenter: triggerBounds.top + triggerBounds.height / 2,
+        limitCenter: limitBounds.top + limitBounds.height / 2,
+      }
+    })
+
+  await page.goto('/#sandbox')
+  const desktop = await readAlignment()
+  expect(Math.abs(desktop.triggerCenter - desktop.limitCenter)).toBeLessThanOrEqual(1)
+  await expect(page.locator('.sandbox-amount__heading')).toHaveText('Amount')
+  await expect(page.locator('.sandbox-picker-selection__limit')).toHaveCount(1)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.reload()
+  await expect(page.locator('.sandbox-picker-selection__limit')).toBeHidden()
+  await page.getByRole('combobox', { name: 'Sandbox algorithm' }).click()
+  const phoneOverflow = await page.evaluate(() => ({
+    page: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    popover:
+      document.querySelector('.rich-select__popover--viewport')!.getBoundingClientRect().right -
+      window.innerWidth,
+  }))
+  expect(phoneOverflow.page).toBe(0)
+  expect(phoneOverflow.popover).toBeLessThanOrEqual(0)
+  assertNoConsoleErrors()
+})
+
+test('Dropdowns stay inside the mobile viewport across the site', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+  const expectVisibleNativeSelectsInViewport = async () => {
+    const geometries = await page.locator('select:visible').evaluateAll((selects) =>
+      selects.map((select) => {
+        const bounds = select.getBoundingClientRect()
+        return { left: bounds.left, right: bounds.right, viewportWidth: window.innerWidth }
+      }),
+    )
+    for (const geometry of geometries) {
+      expect(geometry.left).toBeGreaterThanOrEqual(0)
+      expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth)
+    }
+  }
+
+  const routes = [
+    { hash: 'visualize', labels: ['Mobile algorithm', 'Dataset', 'Code language'] },
+    { hash: 'compare', labels: ['First algorithm', 'Second algorithm'] },
+    { hash: 'sandbox', labels: ['Sandbox algorithm', 'Dataset'] },
+  ]
+
+  for (const route of routes) {
+    await page.goto(`/#${route.hash}`)
+    await expectVisibleNativeSelectsInViewport()
+    for (const label of route.labels) {
+      const trigger = page.getByRole('combobox', { name: label, exact: true })
+      await trigger.scrollIntoViewIfNeeded()
+      await trigger.click()
+      const popover = page.locator('.rich-select__popover:visible')
+      await expect(popover).toBeVisible()
+      const geometry = await popover.evaluate((element) => {
+        const bounds = element.getBoundingClientRect()
+        return {
+          left: bounds.left,
+          right: bounds.right,
+          viewportWidth: window.innerWidth,
+          pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        }
+      })
+      expect(geometry.left).toBeGreaterThanOrEqual(0)
+      expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth)
+      expect(geometry.pageOverflow).toBeLessThanOrEqual(1)
+      await page.keyboard.press('Escape')
+    }
+  }
+
+  await page.goto('/#learn')
+  await page.locator('.learn-filter-disclosure summary').click()
+  await expectVisibleNativeSelectsInViewport()
+
   assertNoConsoleErrors()
 })
 

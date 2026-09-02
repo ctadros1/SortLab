@@ -1,6 +1,6 @@
 # SortLab
 
-SortLab is a local-first educational sorting algorithm playground for CS1 students. It turns algorithm execution into structured events so students can watch comparisons and writes, step backward and forward, hear value-mapped tones, connect each action to pseudocode, and compare algorithms without confusing animation speed with computational performance.
+SortLab is an open-source educational sorting algorithm playground for CS1 students. It turns algorithm execution into structured events so students can watch comparisons and writes, step backward and forward, hear value-mapped tones, connect each action to code, and compare algorithms without confusing animation speed with computational performance.
 
 ![SortLab desktop interface](docs/design/after/visualize-light-1440x1000.png)
 
@@ -9,19 +9,14 @@ canvas in the center, and a sticky algorithm guide on the right. At narrower wid
 controls continue below the canvas without changing the sorting behavior.
 
 Sandbox is a separate high-scale Canvas experience for cinematic, worker-driven runs with up to
-4,096 values and advanced sound and rendering controls.
+16,384 values for supported algorithms and advanced sound and rendering controls.
 
 ![SortLab Sandbox](docs/design/after/sandbox-default-1440x1000.png)
 
-## LAN access
+## Live site
 
-- URL: `http://192.168.75.59:8787`
-- Project directory: `/srv/docker/projects/sorting-playground`
-- Container: `sorting-playground`
-- Image: `sorting-playground:1.0.0`
-- Arcane: `http://192.168.75.59:3552`
-
-The service binds only to the dev-lab LAN address. It has no accounts, database, analytics, telemetry, external fonts, ads, third-party scripts, or public exposure.
+[Open SortLab](https://project.christiantadros.com/sortlab/). The project source is available in
+this repository and the app does not require an account.
 
 ## What students can do
 
@@ -33,7 +28,7 @@ The service binds only to the dev-lab LAN address. It has no accounts, database,
 - Enable a clean-room Web Audio audibilization engine with value-mapped pitch, bounded polyphony,
   click-free envelopes, automatic gain normalization, and adaptive density.
 - Keep Visualize focused with only Sound, Volume, and Classic / Soft / Minimal presets.
-- Open Sandbox for 64–4,096 Canvas-rendered values, worker-driven playback, fullscreen and hidden
+- Open Sandbox for 16–16,384 Canvas-rendered values, worker-driven playback, fullscreen and hidden
   interface modes, six visual presets, and advanced audio controls.
 - Read deterministic narration, live operation counters, recursion depth, phase, JavaScript execution time, and pseudocode highlighting.
 - Compare two algorithms on the same array with synchronized playback and a measured execution summary.
@@ -66,7 +61,7 @@ The desktop Visualize controls form an independently scrolling left rail. The ri
 fills the viewport below the header while leaving wheel scrolling with the main document. Both rails
 return to normal document flow on narrower screens.
 
-The Code tab supports Pseudocode, C, C++, Java, Python, JavaScript, and TypeScript. It uses aligned
+The Code tab supports Pseudocode, C / C++, Java, Python, and TypeScript. It uses aligned
 line numbers, lightweight token styling, a single active-line marker, and a live explanation. The
 selected language is saved locally, and changing languages during playback preserves the active
 semantic operation. The Explain tab summarizes the current phase and operation, invariant, key
@@ -135,9 +130,9 @@ The TimSort, IntroSort, MSD Radix, Tournament, Batcher, and Bogo implementations
 - Bogo Sort: maximum 8; recommended 6. A bounded shuffle attempt count falls back to Insertion Sort so cancellation and completion remain safe.
 - Stored event history is capped at 250,000 events. Every event carries a bounded array snapshot, making previous-step behavior exact and fast for visualization-sized arrays.
 - Benchmark mode supports up to 50,000 values and skips quadratic/pathological choices above 5,000.
-- Sandbox tiers are 64–4,096. Quick, merge, heap, radix, counting, and bitonic reach 4,096; Shell
-  reaches 2,048; quadratic classics stop at 512; networks require powers of two. Novelty entries
-  remain searchable but are capped as low as 6–8 values and protected by operation/time budgets.
+- Sandbox supports 16–16,384 values, with an explicit per-algorithm maximum shown in the picker.
+  Efficient worker-backed sorts receive the largest limits; quadratic, network, and novelty sorts
+  use lower safety caps and remain protected by operation and time budgets.
 
 The visualizer materializes bounded event streams so reverse stepping is immediate. The benchmark worker uses unanimated implementations, a warm-up, copied identical arrays, multiple trials, median display, and cancellation checkpoints. Results remain device-, browser-, JIT-, workload-, and implementation-specific.
 

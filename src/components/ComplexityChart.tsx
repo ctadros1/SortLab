@@ -1,82 +1,180 @@
-import { MathNotation } from './MathNotation'
+import { complexityCurves, complexityInputs } from '../data/complexity'
 
-const curves = [
-  { label: 'O(1)', color: 'curve-1', values: () => 1 },
-  { label: 'O(log n)', color: 'curve-2', values: (n: number) => Math.log2(n) },
-  { label: 'O(n)', color: 'curve-3', values: (n: number) => n },
-  { label: 'O(n log n)', color: 'curve-4', values: (n: number) => n * Math.log2(n) },
-  { label: 'O(n²)', color: 'curve-5', values: (n: number) => n * n },
-  { label: 'O(2ⁿ)', color: 'curve-6', values: (n: number) => Math.pow(2, n) },
-  { label: 'O(n!)', color: 'curve-7', values: (n: number) => factorial(Math.min(n, 10)) },
-]
+const plot = { left: 72, right: 632, top: 34, bottom: 344 }
+const highestWork = Math.max(
+  ...complexityCurves.flatMap((curve) => complexityInputs.map((n) => curve.work(n))),
+)
+const highestPower = Math.ceil(Math.log10(highestWork))
+const yTicks = Array.from({ length: highestPower + 1 }, (_, exponent) => 10 ** exponent)
 
-function factorial(value: number): number {
-  return value <= 1 ? 1 : value * factorial(value - 1)
+const xPosition = (n: number) =>
+  plot.left +
+  ((n - complexityInputs[0]) / (complexityInputs.at(-1)! - complexityInputs[0])) *
+    (plot.right - plot.left)
+
+const yPosition = (work: number) =>
+  plot.bottom - (Math.log10(Math.max(1, work)) / highestPower) * (plot.bottom - plot.top)
+
+const tickLabel = (value: number) => {
+  if (value >= 1_000_000) return `${value / 1_000_000}M`
+  if (value >= 1_000) return `${value / 1_000}K`
+  return value.toLocaleString()
 }
 
 export function ComplexityChart() {
-  const points = Array.from({ length: 10 }, (_, index) => index + 1)
-  const paths = curves.map((curve) => {
-    const transformed = points.map((n) => Math.log10(curve.values(n) + 1))
-    const max = Math.max(1, ...transformed)
-    return transformed
+  const paths = complexityCurves.map((curve) => ({
+    ...curve,
+    path: complexityInputs
       .map(
-        (value, index) =>
-          `${index === 0 ? 'M' : 'L'} ${45 + index * 55} ${250 - (value / max) * 205}`,
+        (n, index) =>
+          `${index === 0 ? 'M' : 'L'} ${xPosition(n).toFixed(2)} ${yPosition(curve.work(n)).toFixed(2)}`,
       )
-      .join(' ')
-  })
+      .join(' '),
+    endValue: curve.work(complexityInputs.at(-1)!),
+  }))
+
   return (
     <section className="complexity-chart-section">
       <div className="chart-heading">
         <div>
-          <span className="section-label">Growth, not a stopwatch</span>
-          <h2>How work grows as n increases</h2>
+          <span className="section-label">One scale, honest growth</span>
+          <h2>How work changes as input grows</h2>
         </div>
-        <p>Log-scaled teaching view. Curves show growth shape, not predicted seconds.</p>
+        <p>Every curve uses the same log-scaled axis. One vertical step means 10× more work.</p>
       </div>
       <div className="complexity-chart-wrap">
-        <svg viewBox="0 0 590 290" role="img" aria-labelledby="complexity-title complexity-desc">
-          <title id="complexity-title">Approximate growth classes from constant to factorial</title>
-          <desc id="complexity-desc">
-            Seven labeled curves rise at increasingly steep rates on a log-scaled teaching axis as
-            input size grows from one to ten.
-          </desc>
-          <line x1="45" y1="250" x2="560" y2="250" className="axis" />
-          <line x1="45" y1="35" x2="45" y2="250" className="axis" />
-          {[1, 3, 5, 7, 9].map((n) => (
-            <text x={45 + (n - 1) * 55} y="274" key={n}>
-              {n}
-            </text>
-          ))}
-          <text x="520" y="286">
-            input n
-          </text>
-          <text x="10" y="28">
-            relative work (log scale)
-          </text>
-          {paths.map((path, index) => (
-            <path
-              key={curves[index].label}
-              d={path}
-              className={`growth-line ${curves[index].color}`}
+        <p className="chart-mobile-hint">Swipe horizontally to inspect every label.</p>
+        <div className="complexity-chart-scroll">
+          <svg
+            className="complexity-chart"
+            viewBox="0 0 820 400"
+            role="img"
+            aria-labelledby="complexity-title complexity-desc"
+          >
+            <title id="complexity-title">Representative algorithm growth classes</title>
+            <desc id="complexity-desc">
+              Seven functions share one logarithmic work axis for input sizes two through ten. At
+              input ten, constant work is one, quadratic work is one hundred, exponential work is
+              one thousand twenty-four, and factorial work is three million six hundred twenty-eight
+              thousand eight hundred.
+            </desc>
+
+            <rect
+              className="complexity-plot-background"
+              x={plot.left}
+              y={plot.top}
+              width={plot.right - plot.left}
+              height={plot.bottom - plot.top}
+              rx="12"
             />
-          ))}
-        </svg>
-        <div className="chart-legend">
-          {curves.map((curve) => (
-            <span key={curve.label}>
-              <i className={curve.color} />
-              <MathNotation value={curve.label} />
-            </span>
-          ))}
+
+            {yTicks.map((tick) => {
+              const y = yPosition(tick)
+              return (
+                <g key={tick}>
+                  <line className="chart-grid-line" x1={plot.left} x2={plot.right} y1={y} y2={y} />
+                  <text className="chart-tick-label" x={plot.left - 13} y={y + 4} textAnchor="end">
+                    {tickLabel(tick)}
+                  </text>
+                </g>
+              )
+            })}
+
+            {[2, 4, 6, 8, 10].map((n) => {
+              const x = xPosition(n)
+              return (
+                <g key={n}>
+                  <line
+                    className="chart-grid-line chart-grid-line--vertical"
+                    x1={x}
+                    x2={x}
+                    y1={plot.top}
+                    y2={plot.bottom}
+                  />
+                  <text className="chart-tick-label" x={x} y={plot.bottom + 25} textAnchor="middle">
+                    {n}
+                  </text>
+                </g>
+              )
+            })}
+
+            <text className="chart-axis-title" x={plot.left} y="19">
+              Representative work · logarithmic scale
+            </text>
+            <text className="chart-axis-title" x={plot.right} y={plot.bottom + 47} textAnchor="end">
+              Input size n
+            </text>
+
+            {paths.map((curve) => {
+              const endpointY = yPosition(curve.endValue)
+              return (
+                <g className={curve.color} data-series={curve.id} key={curve.id}>
+                  <path className="growth-line" d={curve.path} data-end-value={curve.endValue} />
+                  <circle className="growth-endpoint" cx={plot.right} cy={endpointY} r="4" />
+                  <line
+                    className="growth-label-rule"
+                    x1={plot.right + 7}
+                    x2={plot.right + 18}
+                    y1={endpointY}
+                    y2={endpointY}
+                  />
+                  <text className="growth-label" x={plot.right + 24} y={endpointY + 4}>
+                    {curve.label}
+                  </text>
+                </g>
+              )
+            })}
+          </svg>
+        </div>
+
+        <div className="complexity-chart-proof" aria-label="Representative work at input ten">
+          <strong>At n = 10</strong>
+          <span>
+            <b>n log₂ n</b> ≈ 33
+          </span>
+          <span>
+            <b>n²</b> = 100
+          </span>
+          <span>
+            <b>2ⁿ</b> = 1,024
+          </span>
+          <span>
+            <b>n!</b> = 3,628,800
+          </span>
         </div>
       </div>
-      <p>
-        Variables: <strong>n</strong> = input items, <strong>k</strong> = value range,{' '}
-        <strong>d</strong> = digit count, and <strong>b</strong> = radix or bucket count. Big-O
-        describes growth; constants, data shape, cache behavior, and implementation details still
-        matter.
+
+      <div className="sr-only">
+        <table>
+          <caption>Representative work by complexity class and input size</caption>
+          <thead>
+            <tr>
+              <th scope="col">Complexity</th>
+              {complexityInputs.map((n) => (
+                <th scope="col" key={n}>
+                  n = {n}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {complexityCurves.map((curve) => (
+              <tr key={curve.id}>
+                <th scope="row">{curve.label}</th>
+                {complexityInputs.map((n) => (
+                  <td key={n}>
+                    {curve.work(n).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="complexity-chart-note">
+        Representative functions use coefficient 1 and log₂ n. Big-O omits constants and lower-order
+        terms, so these values explain growth—not runtime predictions.
       </p>
     </section>
   )

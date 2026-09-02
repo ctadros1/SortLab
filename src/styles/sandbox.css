@@ -791,24 +791,13 @@ select:not([multiple]) {
   width: 100%;
 }
 
-.sandbox-picker-selection > span:last-child,
+.sandbox-picker-selection__copy,
 .sandbox-dataset-selection > span:last-child {
   min-width: 0;
   flex: 1;
 }
 
-.sandbox-picker-selection__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sandbox-picker-selection__title strong {
-  min-width: 0;
-  flex: 1;
-}
-
-.sandbox-picker-selection__title i,
+.sandbox-picker-selection__limit,
 .sandbox-algorithm-limit {
   flex: 0 0 auto;
   color: #91a6c4;
@@ -816,6 +805,10 @@ select:not([multiple]) {
   font-style: normal;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.sandbox-picker-selection__limit {
+  align-self: center;
 }
 
 .sandbox-controls .algorithm-option__title {
@@ -1264,11 +1257,11 @@ select:not([multiple]) {
 
   .sandbox-picker-selection small,
   .sandbox-dataset-selection small,
-  .sandbox-picker-selection__title i {
+  .sandbox-picker-selection__limit {
     font-size: 0.62rem;
   }
 
-  .sandbox-picker-selection__title i {
+  .sandbox-picker-selection__limit {
     display: none;
   }
 
@@ -1391,7 +1384,7 @@ select:not([multiple]) {
 :root[data-theme='light'] .sandbox-amount,
 :root[data-theme='light'] .sandbox-picker-selection small,
 :root[data-theme='light'] .sandbox-dataset-selection small,
-:root[data-theme='light'] .sandbox-picker-selection__title i,
+:root[data-theme='light'] .sandbox-picker-selection__limit,
 :root[data-theme='light'] .sandbox-algorithm-limit,
 :root[data-theme='light'] .sandbox-amount__heading small,
 :root[data-theme='light'] .sandbox-amount__scale small,

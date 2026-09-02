@@ -56,15 +56,13 @@ export function SandboxAlgorithmPicker({ value, onChange, disabled }: Props) {
           <span className="picker-icon" aria-hidden="true">
             <AlgorithmIcon name={option.sandbox.icon} />
           </span>
-          <span>
-            <span className="sandbox-picker-selection__title">
-              <strong>{option.sandbox.name}</strong>
-              <i>{amountLimitLabel(option.sandbox)}</i>
-            </span>
+          <span className="sandbox-picker-selection__copy">
+            <strong>{option.sandbox.name}</strong>
             <small title={option.sandbox.implementationNote}>
               {option.sandbox.tags.slice(0, 2).join(' · ')}
             </small>
           </span>
+          <i className="sandbox-picker-selection__limit">{amountLimitLabel(option.sandbox)}</i>
         </span>
       )}
       renderOption={(option, selected) => (

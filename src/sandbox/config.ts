@@ -125,7 +125,7 @@ export const defaultSandboxPreferences: SandboxPreferences = {
   algorithm: 'quick-hoare',
   dataset: 'random',
   amount: 1024,
-  speedMode: 'fast',
+  speedMode: 'realtime',
   visual: {
     preset: 'classic',
     gap: 0,

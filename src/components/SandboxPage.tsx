@@ -317,11 +317,7 @@ export function SandboxPage() {
             <label className="sandbox-amount">
               <span className="sandbox-amount__heading">
                 <span>Amount</span>
-                <small>
-                  {sandboxAlgorithm?.exactAmount
-                    ? `Exactly ${sandboxAlgorithm.exactAmount.toLocaleString()}`
-                    : `Max ${amountMaximum.toLocaleString()}${sandboxAlgorithm?.powerOfTwo ? ' · powers of two' : ''}`}
-                </small>
+                {sandboxAlgorithm?.powerOfTwo ? <small>Powers of two</small> : null}
               </span>
               <span className="sandbox-amount__input">
                 <input
@@ -389,8 +385,8 @@ export function SandboxPage() {
                     }))
                   }
                 >
-                  <option value="realtime">Detailed (slowest)</option>
-                  <option value="fast">Fast (recommended)</option>
+                  <option value="realtime">Detailed (recommended)</option>
+                  <option value="fast">Fast (quicker)</option>
                   <option value="maximum">Maximum (fastest)</option>
                 </select>
               </label>

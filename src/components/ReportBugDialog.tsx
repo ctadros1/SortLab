@@ -252,7 +252,7 @@ export function ReportBugDialog({ initialPage, onClose }: Props) {
               </button>
               <button
                 type="submit"
-                className="button button--primary"
+                className="button button--primary button--with-icon"
                 disabled={status === 'submitting' || message.trim().length < 20 || !token}
               >
                 <AppIcon name="warning" aria-hidden="true" />
