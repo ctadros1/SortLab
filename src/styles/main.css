@@ -51,6 +51,7 @@
 }
 html {
   color-scheme: light;
+  overscroll-behavior-y: none;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
@@ -125,6 +126,7 @@ code,
 
 .app-shell {
   min-height: 100vh;
+  padding-top: var(--header-height, 72px);
 }
 .topbar {
   min-height: 72px;
@@ -135,8 +137,11 @@ code,
   padding: 0 24px;
   border-bottom: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg) 94%, transparent);
-  position: sticky;
+  position: fixed;
   top: 0;
+  right: 0;
+  left: 0;
+  width: 100%;
   z-index: 20;
   backdrop-filter: blur(14px);
 }

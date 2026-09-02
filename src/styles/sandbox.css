@@ -501,6 +501,10 @@
   top: 60px;
 }
 
+html[data-sandbox-hidden='true'] {
+  --header-height: 42px;
+}
+
 html[data-sandbox-hidden='true'] .topbar {
   min-height: 42px;
   grid-template-columns: 1fr auto;

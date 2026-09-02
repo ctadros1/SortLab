@@ -1337,6 +1337,10 @@ input[type='range'] {
 }
 
 @media (max-width: 900px) {
+  :root {
+    --header-height: 66px;
+  }
+
   .topbar {
     grid-template-columns: 48px minmax(0, 1fr) auto;
     min-height: 66px;

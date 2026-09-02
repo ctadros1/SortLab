@@ -237,15 +237,22 @@ test('Visualize uses independent desktop rails and page-level guide scrolling', 
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto('/#visualize')
 
+  const header = page.locator('.topbar')
   const controls = page.locator('.control-rail')
   const guide = page.locator('.code-panel')
+  await expect(header).toHaveCSS('position', 'fixed')
   await expect(controls).toHaveCSS('overflow-y', 'auto')
   await expect(guide).toHaveCSS('overflow-y', 'visible')
 
   const layout = await page.evaluate(() => {
     const controls = document.querySelector<HTMLElement>('.control-rail')!
     const guide = document.querySelector<HTMLElement>('.code-panel')!
+    const header = document.querySelector<HTMLElement>('.topbar')!
+    const shell = document.querySelector<HTMLElement>('.app-shell')!
     return {
+      headerTop: header.getBoundingClientRect().top,
+      headerBottom: header.getBoundingClientRect().bottom,
+      shellPaddingTop: Number.parseFloat(getComputedStyle(shell).paddingTop),
       controlsTop: controls.getBoundingClientRect().top,
       controlsBottom: controls.getBoundingClientRect().bottom,
       controlsScrollable: controls.scrollHeight > controls.clientHeight,
@@ -254,6 +261,9 @@ test('Visualize uses independent desktop rails and page-level guide scrolling', 
       viewportHeight: window.innerHeight,
     }
   })
+  expect(layout.headerTop).toBe(0)
+  expect(layout.headerBottom).toBeCloseTo(72, 0)
+  expect(layout.shellPaddingTop).toBeCloseTo(72, 0)
   expect(layout.controlsScrollable).toBe(true)
   expect(layout.controlsTop).toBeCloseTo(72, 0)
   expect(layout.controlsBottom).toBeCloseTo(layout.viewportHeight, 0)
@@ -265,9 +275,16 @@ test('Visualize uses independent desktop rails and page-level guide scrolling', 
   })
   expect(await page.evaluate(() => window.scrollY)).toBe(0)
 
-  await guide.hover()
-  await page.mouse.wheel(0, 500)
+  await page.locator('.visual-stage').hover()
+  const headerPositions: number[] = []
+  for (let index = 0; index < 4; index += 1) {
+    await page.mouse.wheel(0, 2_000)
+    headerPositions.push(await header.evaluate((element) => element.getBoundingClientRect().top))
+  }
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+  await page.waitForTimeout(200)
+  headerPositions.push(await header.evaluate((element) => element.getBoundingClientRect().top))
+  expect(headerPositions.every((top) => Math.abs(top) < 0.1)).toBe(true)
   expect(await controls.evaluate((element) => element.getBoundingClientRect().top)).toBeCloseTo(
     72,
     0,
