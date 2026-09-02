@@ -3,7 +3,8 @@ import type { SandboxPreferences } from './types'
 import { defaultSandboxPreferences, sandboxAlgorithms, sandboxVisualPresets } from './config'
 import { sandboxDatasetRegistry } from './datasets'
 
-export const SANDBOX_PREFERENCES_KEY = 'sortlab-sandbox-v1'
+const LEGACY_SANDBOX_PREFERENCES_KEY = 'sortlab-sandbox-v1'
+export const SANDBOX_PREFERENCES_KEY = 'sortlab-sandbox-v2'
 
 interface StorageLike {
   getItem(key: string): string | null
@@ -13,9 +14,9 @@ interface StorageLike {
 export function loadSandboxPreferences(storage?: StorageLike): SandboxPreferences {
   if (!storage) return structuredClone(defaultSandboxPreferences)
   try {
-    const parsed = JSON.parse(
-      storage.getItem(SANDBOX_PREFERENCES_KEY) ?? '{}',
-    ) as Partial<SandboxPreferences>
+    const current = storage.getItem(SANDBOX_PREFERENCES_KEY)
+    const legacy = current ? null : storage.getItem(LEGACY_SANDBOX_PREFERENCES_KEY)
+    const parsed = JSON.parse(current ?? legacy ?? '{}') as Partial<SandboxPreferences>
     const algorithm = sandboxAlgorithms.some((entry) => entry.id === parsed.algorithm)
       ? parsed.algorithm!
       : defaultSandboxPreferences.algorithm
@@ -32,7 +33,19 @@ export function loadSandboxPreferences(storage?: StorageLike): SandboxPreference
       algorithm,
       dataset,
       visual,
-      audio: createAudioSettings(presetId, parsed.audio),
+      audio: createAudioSettings(
+        presetId,
+        legacy && parsed.audio
+          ? {
+              ...parsed.audio,
+              events: {
+                ...createAudioSettings(presetId).events,
+                ...parsed.audio.events,
+                write: true,
+              },
+            }
+          : parsed.audio,
+      ),
     }
   } catch {
     return structuredClone(defaultSandboxPreferences)

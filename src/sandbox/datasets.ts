@@ -73,7 +73,7 @@ export function generateSandboxArray(mode: SandboxDatasetId, size: number, seed:
     const pivot = Math.max(1, Math.floor(size * 0.37))
     return ranks.slice(pivot).concat(ranks.slice(0, pivot))
   }
-  if (mode === 'all-equal') return Array(size).fill(50)
+  if (mode === 'all-equal') return Array(size).fill(Math.max(1, Math.round(size / 2)))
   if (mode === 'few-unique' || mode === 'small-key-range')
     return Array.from({ length: size }, () => 1 + Math.floor(random() * 5))
   if (mode === 'duplicates')

@@ -3,6 +3,21 @@ export function advanceSharedStep(current: number, advance: number, longestEvent
   return Math.min(longestLastIndex, current + advance)
 }
 
+export function compareCrossfadeLevels(position: number) {
+  const normalized = Math.min(1, Math.max(0, position / 100))
+  return {
+    first: Math.cos((normalized * Math.PI) / 2),
+    second: Math.sin((normalized * Math.PI) / 2),
+  }
+}
+
+export function compareCrossfadeLabel(position: number) {
+  if (position <= 0) return 'First algorithm only'
+  if (position >= 100) return 'Second algorithm only'
+  if (Math.abs(position - 50) <= 1) return 'Balanced'
+  return position < 50 ? 'More first algorithm' : 'More second algorithm'
+}
+
 export function synchronizedEventIndex(
   sharedStep: number,
   eventCount: number,

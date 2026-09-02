@@ -4,6 +4,7 @@ export type Waveform = OscillatorType
 export type PitchMode = 'continuous' | 'chromatic' | 'pentatonic' | 'major'
 export type SoundDensity = 'sparse' | 'balanced' | 'detailed'
 export type SoundPresetId = 'classic' | 'soft' | 'minimal'
+export type AudioOutputChannel = 'center' | 'first' | 'second'
 
 export interface AdsrEnvelope {
   attack: number
@@ -56,4 +57,6 @@ export interface AudioDebugState {
   activeVoices: number
   scheduledEvents: number
   droppedEvents: number
+  outputGains: Record<AudioOutputChannel, number>
+  outputPans: Record<AudioOutputChannel, number>
 }

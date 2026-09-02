@@ -1,3 +1,10 @@
+import type { AlgorithmIconId } from '../types'
+import {
+  browserImplementationKind,
+  browserImplementationNote,
+  hasBrowserImplementation,
+} from './implementationRegistry'
+
 export type SandboxWorkerKind =
   | 'quick'
   | 'merge'
@@ -12,6 +19,7 @@ export type SandboxWorkerKind =
 
 export type SandboxExecutionMode =
   | 'native'
+  | 'browser'
   | 'conceptual'
   | 'simulated-parallel'
   | 'simulated-external'
@@ -27,8 +35,13 @@ export interface SandboxAlgorithm {
   tags: string[]
   maximum: number
   powerOfTwo?: boolean
+  exactAmount?: number
   workerKind: SandboxWorkerKind
   executionMode: SandboxExecutionMode
+  implementationId?: string
+  fidelity: 'actual' | 'parameterized' | 'simulation'
+  implementationNote: string
+  icon: AlgorithmIconId
 }
 
 interface Seed {
@@ -39,17 +52,33 @@ interface Seed {
   tags?: string[]
   maximum?: number
   powerOfTwo?: boolean
+  exactAmount?: number
+  fixedMaximum?: boolean
   workerKind?: SandboxWorkerKind
   executionMode?: SandboxExecutionMode
 }
 
 const modeLabels: Record<SandboxExecutionMode, string> = {
   native: 'Native',
+  browser: 'Browser implementation',
   conceptual: 'Conceptual',
   'simulated-parallel': 'Simulated parallel',
   'simulated-external': 'Simulated external',
   'simulated-gpu': 'Simulated GPU',
   experimental: 'Experimental',
+}
+
+const workerIcons: Record<SandboxWorkerKind, AlgorithmIconId> = {
+  quick: 'partition',
+  merge: 'merge',
+  heap: 'heap',
+  radix: 'digits',
+  counting: 'buckets',
+  shell: 'insertion',
+  bubble: 'adjacent',
+  selection: 'selection',
+  insertion: 'insertion',
+  bitonic: 'network',
 }
 
 function slug(name: string) {
@@ -74,23 +103,55 @@ function catalogGroup(
 ) {
   return seeds.map((value): SandboxAlgorithm => {
     const item = typeof value === 'string' ? seed(value) : value
-    const mode = item.executionMode ?? executionMode
+    const id = item.id ?? slug(item.name)
+    const declaredMode = item.executionMode ?? executionMode
+    const canRunActual =
+      declaredMode !== 'simulated-parallel' &&
+      declaredMode !== 'simulated-external' &&
+      declaredMode !== 'simulated-gpu' &&
+      hasBrowserImplementation(id)
+    const mode = declaredMode === 'conceptual' && canRunActual ? 'browser' : declaredMode
+    const fidelity = canRunActual ? browserImplementationKind(id) : 'simulation'
+    const sourceMaximum = item.maximum ?? maximum
+    const multiplier = item.fixedMaximum
+      ? 1
+      : fidelity === 'simulation'
+        ? 2
+        : item.tags?.includes('Pathological')
+          ? 2.5
+          : item.powerOfTwo
+            ? 2
+            : 2.5
+    const maximumValue = Math.min(16384, Math.floor(sourceMaximum * multiplier))
     return {
-      id: item.id ?? slug(item.name),
+      id,
       name: item.name,
       group,
       description:
         item.description ??
-        `${modeLabels[mode]} ${group.toLowerCase()} model using SortLab’s bounded operation pipeline.`,
+        (fidelity === 'simulation'
+          ? `${modeLabels[mode]} ${group.toLowerCase()} model using SortLab’s bounded operation pipeline.`
+          : `${modeLabels[mode]} of this ${group.toLowerCase()} algorithm with its own operation stream.`),
       aliases: item.aliases ?? [],
-      tags: [modeLabels[mode], ...(item.tags ?? [])],
-      // The worker pipeline and operation budget can safely support one additional
-      // size tier. Keep the ceilings explicit per algorithm, but give learners
-      // enough room to see a meaningful density change on modern displays.
-      maximum: Math.min(8192, (item.maximum ?? maximum) * 2),
+      tags: [
+        fidelity === 'simulation'
+          ? modeLabels[mode]
+          : fidelity === 'parameterized'
+            ? 'Parameterized implementation'
+            : 'Actual implementation',
+        ...(item.tags ?? []),
+      ],
+      // Browser implementations receive a modest extra tier; simulations retain
+      // their conservative bounds because their fallback stream is illustrative.
+      maximum: maximumValue,
       powerOfTwo: item.powerOfTwo,
+      exactAmount: item.exactAmount,
       workerKind: item.workerKind ?? workerKind,
       executionMode: mode,
+      implementationId: canRunActual ? id : undefined,
+      fidelity,
+      implementationNote: browserImplementationNote(id),
+      icon: workerIcons[item.workerKind ?? workerKind],
     }
   })
 }
@@ -335,7 +396,13 @@ const conceptualAlgorithms = [
     seed('Pairwise Sorting Network', { powerOfTwo: true }),
     seed('Shell Sorting Network', { powerOfTwo: true }),
     seed('Bose–Nelson Sorting Network', { powerOfTwo: true }),
-    seed('Minimum-Comparator Networks for Small Arrays', { maximum: 64, powerOfTwo: true }),
+    seed('Minimum-Comparator Networks for Small Arrays', {
+      maximum: 16,
+      powerOfTwo: true,
+      exactAmount: 16,
+      fixedMaximum: true,
+      description: 'Fixed 16-input, 60-comparator network using a published best-known schedule.',
+    }),
     seed('SIMD Sorting Network — Simulated', { executionMode: 'simulated-gpu', powerOfTwo: true }),
     seed('AlphaDev Fixed-Size Sort — Simulated', { maximum: 64, powerOfTwo: true }),
     seed('Shearsort', { powerOfTwo: true }),

@@ -27,7 +27,12 @@ import {
   getCompareAlgorithmOptions,
   getDatasetOptions,
 } from '../ui/pickerOptions'
-import { advanceSharedStep, synchronizedEventIndex } from '../ui/compare'
+import {
+  advanceSharedStep,
+  compareCrossfadeLabel,
+  compareCrossfadeLevels,
+  synchronizedEventIndex,
+} from '../ui/compare'
 import { getBarDisplayRules, markerKindForEvent, nextSwitchState } from '../ui/visualizer'
 
 describe('picker metadata and search', () => {
@@ -93,10 +98,10 @@ describe('picker metadata and search', () => {
   })
 
   it('uses relaxed ceilings and derives compatible automatic adjustments', () => {
-    expect(sandboxAlgorithmById.get('quick-hoare')?.maximum).toBe(8192)
-    expect(sandboxAlgorithmById.get('bubble-optimized')?.maximum).toBe(1024)
-    expect(sandboxAmountRestriction('bubble-optimized', 2048)).toMatch(/1,024 values/)
-    expect(compatibleSandboxAmount('bubble-optimized', 4096)).toBe(1024)
+    expect(sandboxAlgorithmById.get('quick-hoare')?.maximum).toBe(10240)
+    expect(sandboxAlgorithmById.get('bubble-optimized')?.maximum).toBe(1280)
+    expect(sandboxAmountRestriction('bubble-optimized', 2048)).toMatch(/1,280 values/)
+    expect(compatibleSandboxAmount('bubble-optimized', 4096)).toBe(1280)
     expect(compatibleSandboxAmount('bitonic', 5000)).toBe(4096)
   })
 })
@@ -176,6 +181,19 @@ describe('accessible interaction utilities', () => {
     expect(html).toContain('switch-control--plain')
     expect(html).not.toContain('switch-control__icon')
     expect(html).toContain('role="switch"')
+  })
+})
+
+describe('Compare sound crossfader', () => {
+  it('uses an equal-power midpoint and fully isolates either algorithm at the ends', () => {
+    expect(compareCrossfadeLevels(0)).toEqual({ first: 1, second: 0 })
+    expect(compareCrossfadeLevels(50).first).toBeCloseTo(Math.SQRT1_2)
+    expect(compareCrossfadeLevels(50).second).toBeCloseTo(Math.SQRT1_2)
+    expect(compareCrossfadeLevels(100).first).toBeCloseTo(0)
+    expect(compareCrossfadeLevels(100).second).toBe(1)
+    expect(compareCrossfadeLabel(0)).toBe('First algorithm only')
+    expect(compareCrossfadeLabel(50)).toBe('Balanced')
+    expect(compareCrossfadeLabel(100)).toBe('Second algorithm only')
   })
 })
 

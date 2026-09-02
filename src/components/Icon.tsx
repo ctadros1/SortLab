@@ -1,13 +1,10 @@
 import {
   Activity,
   ArrowDownNarrowWide,
-  ArrowDownToLine,
-  ArrowLeftRight,
   ArrowRightLeft,
   ArrowUpNarrowWide,
   AudioLines,
   BarChart3,
-  Binary,
   Blocks,
   BookOpen,
   Braces,
@@ -16,12 +13,10 @@ import {
   ChevronRight,
   CircleDot,
   CircleGauge,
-  Columns3,
   Database,
   Diamond,
   Flag,
   GitCompareArrows,
-  GitMerge,
   Grid3X3,
   Hash,
   Headphones,
@@ -38,7 +33,6 @@ import {
   Menu,
   Moon,
   MoveHorizontal,
-  Network,
   Pause,
   PencilLine,
   Play,
@@ -55,9 +49,7 @@ import {
   StepBack,
   StepForward,
   Sun,
-  Target,
   TriangleAlert,
-  Trophy,
   Volume2,
   Waves,
   X,
@@ -170,25 +162,6 @@ const appIcons: Record<AppIconName, LucideIcon> = {
   close: X,
 }
 
-const algorithmIcons: Record<AlgorithmIconId, LucideIcon> = {
-  adjacent: ArrowLeftRight,
-  arrows: ArrowRightLeft,
-  binary: Binary,
-  buckets: Columns3,
-  cycle: RefreshCcw,
-  digits: Hash,
-  heap: Network,
-  insertion: ArrowDownToLine,
-  merge: GitMerge,
-  network: GitCompareArrows,
-  pancake: Layers3,
-  partition: MoveHorizontal,
-  selection: Target,
-  strand: Waves,
-  tournament: Trophy,
-  warning: TriangleAlert,
-}
-
 const datasetIcons: Record<DatasetIconId, LucideIcon> = {
   random: Shuffle,
   'nearly-sorted': ListOrdered,
@@ -214,8 +187,18 @@ export function AppIcon({ name, ...props }: IconProps & { name: AppIconName }) {
 }
 
 export function AlgorithmIcon({ name, ...props }: IconProps & { name: AlgorithmIconId }) {
-  const Component = algorithmIcons[name]
-  return <Component size={props.size ?? 18} strokeWidth={props.strokeWidth ?? 1.9} {...props} />
+  const size = props.size ?? 18
+  return (
+    <img
+      src={`${import.meta.env.BASE_URL}learn-icons/${name}.png`}
+      alt=""
+      aria-hidden={props['aria-hidden'] ?? true}
+      className={['algorithm-custom-icon', props.className].filter(Boolean).join(' ')}
+      width={size}
+      height={size}
+      decoding="async"
+    />
+  )
 }
 
 export function DatasetIcon({ name, ...props }: IconProps & { name: DatasetIconId }) {

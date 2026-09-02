@@ -2,9 +2,30 @@ import { AudioVoice } from './AudioVoice'
 import { eventAccent, normalizedVoiceGain, shouldSampleSound } from './AudioScheduler'
 import { datasetRange, valueToFrequency } from './frequencyMapping'
 import { createAudioSettings } from './presets'
-import type { AudioDebugState, AudioSettings, SortSoundEvent } from './audioTypes'
+import type {
+  AudioDebugState,
+  AudioOutputChannel,
+  AudioSettings,
+  SortSoundEvent,
+} from './audioTypes'
 
 type ContextFactory = () => AudioContext
+
+interface OutputSettings {
+  gain: number
+  pan: number
+}
+
+interface OutputBus {
+  gain: GainNode
+  panner: StereoPannerNode | null
+}
+
+const defaultOutputSettings: Record<AudioOutputChannel, OutputSettings> = {
+  center: { gain: 1, pan: 0 },
+  first: { gain: Math.SQRT1_2, pan: -0.72 },
+  second: { gain: Math.SQRT1_2, pan: 0.72 },
+}
 
 export class AudioEngine {
   private context: AudioContext | null = null
@@ -12,6 +33,8 @@ export class AudioEngine {
   private compressor: DynamicsCompressorNode | null = null
   private voices = new Set<AudioVoice>()
   private settings: AudioSettings = createAudioSettings()
+  private outputSettings = structuredClone(defaultOutputSettings)
+  private outputBuses = new Map<Exclude<AudioOutputChannel, 'center'>, OutputBus>()
   private scheduledEvents = 0
   private droppedEvents = 0
   private lifecycleBound = false
@@ -43,6 +66,38 @@ export class AudioEngine {
     return this.context
   }
 
+  private outputFor(channel: AudioOutputChannel) {
+    const context = this.ensureContext()
+    if (!this.master || channel === 'center') return this.master
+    const existing = this.outputBuses.get(channel)
+    if (existing) return existing.gain
+
+    const settings = this.outputSettings[channel]
+    const gain = context.createGain()
+    gain.gain.value = settings.gain
+    const panner =
+      typeof context.createStereoPanner === 'function' ? context.createStereoPanner() : null
+    if (panner) {
+      panner.pan.value = settings.pan
+      gain.connect(panner)
+      panner.connect(this.master)
+    } else gain.connect(this.master)
+    this.outputBuses.set(channel, { gain, panner })
+    return gain
+  }
+
+  setOutputMix(channel: Exclude<AudioOutputChannel, 'center'>, gain: number, pan: number) {
+    const settings = {
+      gain: Math.min(1, Math.max(0, gain)),
+      pan: Math.min(1, Math.max(-1, pan)),
+    }
+    this.outputSettings[channel] = settings
+    const bus = this.outputBuses.get(channel)
+    if (!bus || !this.context) return
+    bus.gain.gain.setTargetAtTime(settings.gain, this.context.currentTime, 0.012)
+    bus.panner?.pan.setTargetAtTime(settings.pan, this.context.currentTime, 0.012)
+  }
+
   private bindLifecycle() {
     if (this.lifecycleBound || typeof document === 'undefined') return
     this.lifecycleBound = true
@@ -64,9 +119,15 @@ export class AudioEngine {
     return context.state === 'running'
   }
 
-  private startVoice(frequency: number, gain: number, startTime: number) {
+  private startVoice(
+    frequency: number,
+    gain: number,
+    startTime: number,
+    channel: AudioOutputChannel,
+  ) {
     const context = this.ensureContext()
-    if (!this.master) return
+    const destination = this.outputFor(channel)
+    if (!destination) return
     while (this.voices.size >= this.settings.maxPolyphony) {
       const oldest = [...this.voices].sort((left, right) => left.startedAt - right.startedAt)[0]
       if (!oldest) break
@@ -76,7 +137,7 @@ export class AudioEngine {
     }
     const voice = new AudioVoice({
       context,
-      destination: this.master,
+      destination,
       frequency,
       waveform: this.settings.waveform,
       gain,
@@ -87,7 +148,7 @@ export class AudioEngine {
     this.voices.add(voice)
   }
 
-  play(event: SortSoundEvent) {
+  play(event: SortSoundEvent, channel: AudioOutputChannel = 'center') {
     if (
       !this.settings.enabled ||
       !this.settings.events[event.type as keyof typeof this.settings.events]
@@ -119,14 +180,14 @@ export class AudioEngine {
           this.settings.maximumFrequency,
           this.settings.pitchMode,
         )
-        this.startVoice(frequency, gain, startTime)
+        this.startVoice(frequency, gain, startTime, channel)
       }
       this.scheduledEvents += 1
       return true
     })
   }
 
-  async playCompletion(dataset: number[], speed = 30) {
+  async playCompletion(dataset: number[], speed = 30, channel: AudioOutputChannel = 'center') {
     if (!this.settings.enabled || !this.settings.events.completion) return
     const ready = await this.resume()
     if (!ready || !this.context || dataset.length === 0) return
@@ -145,7 +206,7 @@ export class AudioEngine {
       )
       const gain =
         0.08 * this.settings.gainScale * normalizedVoiceGain(index + 1, this.settings.autoGain)
-      this.startVoice(frequency, gain, this.context.currentTime + 0.015 + index * 0.045)
+      this.startVoice(frequency, gain, this.context.currentTime + 0.015 + index * 0.045, channel)
     }
     this.scheduledEvents += noteCount
     void speed
@@ -170,6 +231,16 @@ export class AudioEngine {
       activeVoices: this.voices.size,
       scheduledEvents: this.scheduledEvents,
       droppedEvents: this.droppedEvents,
+      outputGains: {
+        center: this.outputSettings.center.gain,
+        first: this.outputSettings.first.gain,
+        second: this.outputSettings.second.gain,
+      },
+      outputPans: {
+        center: this.outputSettings.center.pan,
+        first: this.outputSettings.first.pan,
+        second: this.outputSettings.second.pan,
+      },
     }
   }
 }

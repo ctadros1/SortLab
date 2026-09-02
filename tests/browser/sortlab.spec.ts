@@ -252,7 +252,7 @@ test('Visualize code languages preserve semantic highlighting and persist', asyn
   expect(semanticId).toBeTruthy()
 
   const languageTrigger = page.getByRole('combobox', { name: 'Code language' })
-  const languages = ['Pseudocode', 'C', 'C++', 'Java', 'Python', 'JavaScript', 'TypeScript']
+  const languages = ['Pseudocode', 'C / C++', 'Java', 'Python', 'TypeScript']
   for (const language of languages) {
     await languageTrigger.click()
     await page.getByRole('option', { name: language, exact: true }).click()
@@ -264,6 +264,65 @@ test('Visualize code languages preserve semantic highlighting and persist', asyn
 
   await page.reload()
   await expect(page.getByRole('combobox', { name: 'Code language' })).toContainText('TypeScript')
+  assertNoConsoleErrors()
+})
+
+test('Visualize exposes complete reference code without crowding the guided view', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/#visualize')
+
+  await page.getByRole('button', { name: 'Full implementation' }).click()
+  await expect(page.getByText('Complete reference implementation', { exact: true })).toBeVisible()
+
+  const languageTrigger = page.getByRole('combobox', { name: 'Code language' })
+  await languageTrigger.click()
+  await page.getByRole('option', { name: 'TypeScript', exact: true }).click()
+
+  const fullCode = page.getByRole('list', {
+    name: 'Quick Sort typescript full implementation',
+  })
+  await expect(fullCode).toContainText('function quick')
+  await expect(fullCode).not.toContainText('choose_pivot')
+  expect(await fullCode.locator('li').count()).toBeGreaterThan(20)
+
+  await page.getByRole('button', { name: 'Expand' }).click()
+  await expect(page.locator('.code-panel')).toHaveClass(/is-code-expanded/)
+  await page.setViewportSize({ width: 390, height: 844 })
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  )
+  expect(overflow).toBeLessThanOrEqual(1)
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.code-panel')).not.toHaveClass(/is-code-expanded/)
+  assertNoConsoleErrors()
+})
+
+test('Visualize, Compare, and Sandbox reuse the custom algorithm icon vocabulary', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#visualize')
+
+  const assertCustomPickerIcons = async (label: string) => {
+    await page.getByRole('combobox', { name: label }).click()
+    const sources = await page
+      .getByRole('listbox', { name: label })
+      .locator('.algorithm-custom-icon')
+      .evaluateAll((images) => images.map((image) => image.getAttribute('src') ?? ''))
+    expect(sources.length).toBeGreaterThan(20)
+    expect(sources.every((source) => source.includes('/learn-icons/'))).toBe(true)
+    expect(new Set(sources).size).toBeLessThanOrEqual(16)
+    await page.keyboard.press('Escape')
+  }
+
+  await assertCustomPickerIcons('Algorithm')
+  await page.getByRole('button', { name: 'Compare' }).click()
+  await assertCustomPickerIcons('First algorithm')
+  await page.getByRole('button', { name: 'Sandbox' }).click()
+  await assertCustomPickerIcons('Sandbox algorithm')
   assertNoConsoleErrors()
 })
 
@@ -383,6 +442,30 @@ test('Compare keeps synchronized playback moving and supports pause and resume',
     'Quick Sort (Hoare)',
   )
 
+  await page.getByRole('combobox', { name: 'First algorithm' }).click()
+  const algorithmSearch = page.getByPlaceholder('Search name, alias, or family')
+  await algorithmSearch.pressSequentially('parallel merge')
+  const simulatedOption = page.getByRole('option', { name: /Parallel Merge Sort — Simulated/ })
+  await simulatedOption.locator('.algorithm-option__caution').hover()
+  await expect(page.getByRole('tooltip')).toHaveText(
+    'Conceptual worker lanes are animated deterministically; this mode does not report real parallel speedup.',
+  )
+  await algorithmSearch.press('Escape')
+
+  const soundFader = page.getByRole('slider', { name: 'Sound crossfader' })
+  const soundMixer = page.getByRole('group', { name: 'Comparison sound mixer' })
+  await expect(soundFader).toHaveValue('50')
+  await expect(soundFader).toHaveAttribute('aria-valuetext', 'Balanced')
+  await expect(soundMixer).toHaveAttribute('data-first-gain', '0.707')
+  await expect(soundMixer).toHaveAttribute('data-second-gain', '0.707')
+  await soundFader.fill('0')
+  await expect(soundFader).toHaveAttribute('aria-valuetext', 'First algorithm only')
+  await expect(soundMixer).toHaveAttribute('data-first-gain', '1.000')
+  await expect(soundMixer).toHaveAttribute('data-second-gain', '0.000')
+  await soundFader.fill('100')
+  await expect(soundFader).toHaveAttribute('aria-valuetext', 'Second algorithm only')
+  await soundFader.fill('50')
+
   const geometry = await page.evaluate(() => {
     const setup = document.querySelector<HTMLElement>('.compare-setup')!.getBoundingClientRect()
     const note = document.querySelector<HTMLElement>('.compare-note')!.getBoundingClientRect()
@@ -394,6 +477,11 @@ test('Compare keeps synchronized playback moving and supports pause and resume',
     const panels = Array.from(document.querySelectorAll<HTMLElement>('.compare-panel')).map(
       (panel) => panel.getBoundingClientRect(),
     )
+    const switchArea = document
+      .querySelector<HTMLElement>('.compare-setup__actions .switch-control')!
+      .getBoundingClientRect()
+    const mixer = document.querySelector<HTMLElement>('.compare-mixer')!.getBoundingClientRect()
+    const actions = document.querySelector<HTMLElement>('.compare-actions')!.getBoundingClientRect()
     return {
       controlHeights,
       noteLeft: note.left,
@@ -401,6 +489,7 @@ test('Compare keeps synchronized playback moving and supports pause and resume',
       setupLeft: setup.left,
       setupWidth: setup.width,
       panelWidths: panels.map(({ width }) => width),
+      actionOrder: [switchArea.left, mixer.left, actions.left],
     }
   })
   expect(Math.max(...geometry.controlHeights) - Math.min(...geometry.controlHeights)).toBeLessThan(
@@ -409,6 +498,8 @@ test('Compare keeps synchronized playback moving and supports pause and resume',
   expect(Math.abs(geometry.panelWidths[0] - geometry.panelWidths[1])).toBeLessThan(1)
   expect(geometry.noteLeft).toBeCloseTo(geometry.setupLeft, 0)
   expect(geometry.noteWidth).toBeCloseTo(geometry.setupWidth, 0)
+  expect(geometry.actionOrder[0]).toBeLessThan(geometry.actionOrder[1])
+  expect(geometry.actionOrder[1]).toBeLessThan(geometry.actionOrder[2])
 
   await page.getByLabel('Shared speed', { exact: true }).fill('120')
   await page.getByRole('button', { name: 'Start comparison' }).click()
@@ -475,6 +566,7 @@ test('Compare collapses into a clear single-column mobile workflow', async ({ pa
   expect(geometry.algorithmTops[1]).toBeGreaterThan(geometry.algorithmTops[0])
   expect(geometry.numberTops[1]).toBeCloseTo(geometry.numberTops[0], 0)
   expect(geometry.panelTops[1]).toBeGreaterThan(geometry.panelTops[0])
+  await expect(page.getByRole('slider', { name: 'Sound crossfader' })).toBeVisible()
   assertNoConsoleErrors()
 })
 
@@ -489,7 +581,7 @@ test('Sandbox renders, completes a large Merge Sort, and exposes advanced audio'
 
   await setSandboxAmount(page, 4096)
   await chooseSandboxAlgorithm(page, /^Merge Sort/)
-  await page.getByLabel('Speed mode').selectOption('maximum')
+  await page.getByLabel('Animation pace').selectOption('maximum')
 
   await page.getByText('Audio settings', { exact: true }).click()
   await page.getByLabel('Waveform').selectOption('sine')
@@ -503,6 +595,177 @@ test('Sandbox renders, completes a large Merge Sort, and exposes advanced audio'
   })
   await expect(page.locator('.sandbox-complete')).toContainText('Sort complete')
   await expect(page.locator('.sandbox-page')).toHaveAttribute('data-queue-size', '0')
+  const activePixels = await canvas.evaluate((element: HTMLCanvasElement) => {
+    const context = element.getContext('2d')!
+    const pixels = context.getImageData(0, 0, element.width, element.height).data
+    let count = 0
+    for (let index = 0; index < pixels.length; index += 16) {
+      const red = pixels[index]
+      const green = pixels[index + 1]
+      const blue = pixels[index + 2]
+      const darkThemeActive = red > 235 && green > 145 && green < 215 && blue < 120
+      const lightThemeActive = red > 175 && red < 220 && green > 80 && green < 135 && blue < 50
+      if (darkThemeActive || lightThemeActive) count += 1
+    }
+    return count
+  })
+  expect(activePixels).toBe(0)
+  assertNoConsoleErrors()
+})
+
+test('Sandbox gives write-heavy Radix Sort an audible operation stream', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#sandbox')
+  await setSandboxAmount(page, 16)
+  await chooseSandboxAlgorithm(page, /^Radix Sort \(LSD\)/)
+  await page.getByLabel('Animation pace').selectOption('realtime')
+
+  await page.getByRole('button', { name: 'Start' }).click()
+  await expect
+    .poll(
+      async () =>
+        Number((await page.locator('.sandbox-page').getAttribute('data-audio-voices')) ?? 0),
+      { timeout: 3_000 },
+    )
+    .toBeGreaterThan(0)
+  await expect(page.locator('.sandbox-page')).toHaveAttribute('data-status', 'complete')
+  await expect(page.locator('.sandbox-stats')).toContainText('Writes')
+  assertNoConsoleErrors()
+})
+
+test('Sandbox light mode uses light panels, dark-blue bars, and clipped dataset previews', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#sandbox')
+  await page.getByRole('button', { name: 'Light theme' }).click()
+  await page.waitForTimeout(250)
+
+  const pace = page.getByLabel('Animation pace')
+  await expect(pace.locator('option')).toHaveText([
+    'Detailed (slowest)',
+    'Fast (recommended)',
+    'Maximum (fastest)',
+  ])
+  await pace.selectOption('realtime')
+  await expect(page.locator('#sandbox-speed-help')).toHaveText(
+    'Small batches show the most sorting detail.',
+  )
+  await pace.selectOption('maximum')
+  await expect(page.locator('#sandbox-speed-help')).toHaveText(
+    'Largest batches prioritize the quickest finish.',
+  )
+
+  const colors = await page.evaluate(() => {
+    const channels = (selector: string) => {
+      const value = getComputedStyle(document.querySelector(selector)!).backgroundColor
+      return (
+        value
+          .match(/[\d.]+/g)
+          ?.slice(0, 3)
+          .map(Number) ?? []
+      )
+    }
+    const canvas = document.querySelector<HTMLCanvasElement>('.sandbox-canvas')!
+    const context = canvas.getContext('2d')!
+    const background = [...context.getImageData(Math.floor(canvas.width / 2), 1, 1, 1).data]
+    const bar = [
+      ...context.getImageData(Math.floor(canvas.width / 2), canvas.height - 2, 1, 1).data,
+    ]
+    return {
+      controls: channels('.sandbox-controls'),
+      stats: channels('.sandbox-stats'),
+      background,
+      bar,
+    }
+  })
+
+  expect(Math.min(...colors.controls)).toBeGreaterThan(230)
+  expect(Math.min(...colors.stats)).toBeGreaterThan(230)
+  expect(Math.min(...colors.background.slice(0, 3))).toBeGreaterThan(215)
+  expect(Math.max(...colors.bar.slice(0, 3))).toBeLessThan(180)
+  expect(colors.bar[2]).toBeGreaterThan(colors.bar[0])
+
+  await page.getByRole('combobox', { name: 'Dataset' }).click()
+  const previewOverflow = await page
+    .locator('.rich-select__popover--viewport .dataset-preview')
+    .evaluateAll((previews) =>
+      Math.max(
+        ...previews.map((preview) => {
+          const container = preview.getBoundingClientRect()
+          const bars = [...preview.querySelectorAll('i')].map((bar) => bar.getBoundingClientRect())
+          return Math.max(...bars.map((bar) => bar.right)) - container.right
+        }),
+      ),
+    )
+  expect(previewOverflow).toBeLessThanOrEqual(0)
+  assertNoConsoleErrors()
+})
+
+test('Sandbox playback and quick settings stay aligned at desktop and phone widths', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  const readAlignment = () =>
+    page.evaluate(() => {
+      const rect = (selector: string) => {
+        const bounds = document.querySelector(selector)!.getBoundingClientRect()
+        return {
+          top: bounds.top,
+          right: bounds.right,
+          bottom: bounds.bottom,
+          left: bounds.left,
+          width: bounds.width,
+          height: bounds.height,
+          centerY: bounds.top + bounds.height / 2,
+        }
+      }
+      return {
+        pace: rect('[name="sandbox-speed-mode"]'),
+        start: rect('.sandbox-playback-primary .sandbox-button--primary'),
+        labels: [
+          rect('.sandbox-quick-settings .switch-control__copy'),
+          rect('.sandbox-quick-settings .sandbox-range > span'),
+          rect('.sandbox-quick-settings .sandbox-field > span'),
+        ],
+        controls: [
+          rect('.sandbox-quick-settings .switch-control__button'),
+          rect('[name="sandbox-volume"]'),
+          rect('[name="sandbox-visual-preset"]'),
+        ],
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      }
+    })
+
+  await page.goto('/#sandbox')
+  const desktop = await readAlignment()
+  expect(Math.abs(desktop.pace.top - desktop.start.top)).toBeLessThanOrEqual(1)
+  expect(Math.abs(desktop.pace.height - desktop.start.height)).toBeLessThanOrEqual(1)
+  expect(Math.max(...desktop.labels.map(({ top }) => top))).toBeCloseTo(
+    Math.min(...desktop.labels.map(({ top }) => top)),
+    0,
+  )
+  expect(Math.max(...desktop.controls.map(({ centerY }) => centerY))).toBeCloseTo(
+    Math.min(...desktop.controls.map(({ centerY }) => centerY)),
+    0,
+  )
+  expect(desktop.overflow).toBe(0)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.reload()
+  const pace = page.getByLabel('Animation pace')
+  await pace.selectOption('fast')
+  await expect(page.locator('#sandbox-speed-help')).toHaveText(
+    'Larger batches balance clarity and finish time.',
+  )
+
+  const phone = await readAlignment()
+  expect(Math.abs(phone.pace.left - phone.start.left)).toBeLessThanOrEqual(1)
+  expect(Math.abs(phone.pace.width - phone.start.width)).toBeLessThanOrEqual(1)
+  expect(phone.start.top).toBeGreaterThan(phone.pace.bottom)
+  expect(Math.abs(phone.labels[0].top - phone.labels[1].top)).toBeLessThanOrEqual(1)
+  expect(Math.abs(phone.controls[0].centerY - phone.controls[1].centerY)).toBeLessThanOrEqual(1)
+  expect(phone.overflow).toBe(0)
   assertNoConsoleErrors()
 })
 
@@ -511,7 +774,7 @@ test('Sandbox pauses, resumes, stops quickly, and cancels on route change', asyn
   await page.goto('/#sandbox')
   await setSandboxAmount(page, 512)
   await chooseSandboxAlgorithm(page, /^Optimized Bubble Sort/)
-  await page.getByLabel('Speed mode').selectOption('realtime')
+  await page.getByLabel('Animation pace').selectOption('realtime')
 
   await page.getByRole('button', { name: 'Start' }).click()
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
@@ -540,16 +803,28 @@ test('Sandbox warns before automatically lowering an unsupported amount', async 
   await page.getByRole('combobox', { name: 'Sandbox algorithm' }).click()
   const restricted = page.getByRole('option', { name: /^Optimized Bubble Sort/ })
   await expect(restricted).toBeEnabled()
-  await expect(restricted).toContainText('Max 1,024')
+  await expect(restricted).toContainText('Max 1,280')
   await restricted.click()
   const warning = page.getByRole('alertdialog')
-  await expect(warning).toContainText('supports up to 1,024 values')
-  await expect(warning).toContainText('lower Amount from 4,096 to 1,024')
+  await expect(warning).toContainText('supports up to 1,280 values')
+  await expect(warning).toContainText('lower Amount from 4,096 to 1,280')
   await expect(page.getByRole('spinbutton', { name: 'Amount' })).toHaveValue('4096')
-  await page.getByRole('button', { name: 'Use 1,024 values' }).click()
-  await expect(page.getByRole('spinbutton', { name: 'Amount' })).toHaveValue('1024')
+  await page.getByRole('button', { name: 'Use 1,280 values' }).click()
+  await expect(page.getByRole('spinbutton', { name: 'Amount' })).toHaveValue('1280')
   await expect(page.getByRole('combobox', { name: 'Sandbox algorithm' })).toContainText(
     'Optimized Bubble Sort',
+  )
+
+  await page.getByRole('combobox', { name: 'Sandbox algorithm' }).click()
+  await page.getByRole('searchbox', { name: 'Search sandbox algorithm' }).fill('Minimum-Comparator')
+  await page.getByRole('option', { name: /^Minimum-Comparator Networks/ }).click()
+  await expect(page.getByRole('alertdialog')).toContainText(
+    'uses a fixed schedule for exactly 16 values',
+  )
+  await page.getByRole('button', { name: 'Use 16 values' }).click()
+  await expect(page.getByRole('spinbutton', { name: 'Amount' })).toHaveValue('16')
+  await expect(page.getByRole('combobox', { name: 'Sandbox algorithm' })).toContainText(
+    'Exactly 16',
   )
 
   await page.getByRole('button', { name: 'Hide interface' }).click()
@@ -568,7 +843,7 @@ test('Sandbox exposes the complete searchable catalog and expanded datasets', as
   await page.goto('/#sandbox')
 
   await page.getByRole('combobox', { name: 'Sandbox algorithm' }).click()
-  await page.getByPlaceholder('Search Sandbox algorithms').fill('pattern defeating')
+  await page.getByPlaceholder('Search Sandbox algorithms').pressSequentially('pattern defeating')
   const conceptual = page.getByRole('option', { name: /Pattern-Defeating Quicksort/ })
   await expect(conceptual).toContainText('Conceptual')
   await conceptual.click()
@@ -583,7 +858,7 @@ test('Sandbox exposes the complete searchable catalog and expanded datasets', as
   await expect(page.getByRole('combobox', { name: 'Dataset' })).toContainText('Normal Distribution')
 
   await page.getByRole('combobox', { name: 'Dataset' }).click()
-  await page.getByPlaceholder('Search Sandbox datasets').fill('median-of-three')
+  await page.getByPlaceholder('Search Sandbox datasets').pressSequentially('median-of-three')
   await page.getByRole('option', { name: /Median-of-Three Killer/ }).click()
   await expect(page.getByRole('combobox', { name: 'Dataset' })).toContainText(
     'Median-of-Three Killer',
@@ -594,6 +869,39 @@ test('Sandbox exposes the complete searchable catalog and expanded datasets', as
   const pathological = page.getByRole('option', { name: /Bogobogosort/ })
   await expect(pathological).toBeEnabled()
   await expect(pathological).toContainText('Max 12')
+  assertNoConsoleErrors()
+})
+
+test('Sandbox renders All Equal values at half height', async ({ page }) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#sandbox')
+
+  await page.getByRole('combobox', { name: 'Dataset' }).click()
+  await page.getByPlaceholder('Search Sandbox datasets').pressSequentially('all equal')
+  await page.getByRole('option', { name: /All Equal/ }).click()
+  await page.waitForTimeout(250)
+
+  const firstBarRatio = await page
+    .locator('.sandbox-canvas')
+    .evaluate((element: HTMLCanvasElement) => {
+      const context = element.getContext('2d')!
+      const x = Math.floor(element.width / 2)
+      const pixels = context.getImageData(x, 0, 1, element.height).data
+      let strongestEdge = { y: 0, difference: 0 }
+      for (let y = 1; y < element.height; y += 1) {
+        const offset = y * 4
+        const previous = offset - 4
+        const difference =
+          Math.abs(pixels[offset] - pixels[previous]) +
+          Math.abs(pixels[offset + 1] - pixels[previous + 1]) +
+          Math.abs(pixels[offset + 2] - pixels[previous + 2])
+        if (difference > strongestEdge.difference) strongestEdge = { y, difference }
+      }
+      return strongestEdge.y / element.height
+    })
+
+  expect(firstBarRatio).toBeGreaterThan(0.45)
+  expect(firstBarRatio).toBeLessThan(0.55)
   assertNoConsoleErrors()
 })
 

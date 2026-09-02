@@ -762,6 +762,13 @@ select:not([multiple]) {
   font-weight: 720;
 }
 
+.sandbox-field > span,
+.sandbox-number > span,
+.sandbox-range > span,
+.sandbox-amount > span {
+  margin-bottom: 0;
+}
+
 .sandbox-field select,
 .sandbox-number input,
 .sandbox-controls .rich-select__trigger,
@@ -925,19 +932,26 @@ select:not([multiple]) {
   font-size: 0.7rem;
 }
 
-.sandbox-section--playback {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+.sandbox-playback-primary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
 }
 
-.sandbox-section--playback h2,
-.sandbox-section--playback .sandbox-playback {
-  grid-column: 1 / -1;
-}
-
-.sandbox-section--playback .sandbox-button--primary {
+.sandbox-playback-primary .sandbox-button--primary {
   width: 100%;
   min-height: 46px;
-  align-self: end;
+}
+
+.sandbox-speed-help {
+  display: block;
+  margin-top: -5px;
+  color: #8295b1;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
 }
 
 .sandbox-playback {
@@ -952,8 +966,8 @@ select:not([multiple]) {
 }
 
 .sandbox-quick-settings {
-  grid-template-columns: 0.9fr 1.1fr 1.2fr;
-  align-items: end;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
   gap: 12px;
   margin-top: 16px;
   padding: 14px 0;
@@ -962,11 +976,41 @@ select:not([multiple]) {
 }
 
 .sandbox-quick-settings .switch-control {
-  align-self: stretch;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 16px 46px;
+  align-items: center;
+  gap: 7px;
+  min-height: 0;
+  padding: 0;
 }
 
 .sandbox-quick-settings .switch-control__copy small {
   display: none;
+}
+
+.sandbox-quick-settings .switch-control__button,
+.sandbox-quick-settings .sandbox-range input[type='range'] {
+  align-self: center;
+}
+
+.sandbox-quick-settings .sandbox-field,
+.sandbox-quick-settings .sandbox-range {
+  grid-template-rows: 16px 46px;
+}
+
+.sandbox-quick-settings .sandbox-field > span,
+.sandbox-quick-settings .sandbox-range > span,
+.sandbox-quick-settings .switch-control__copy {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  align-self: center;
+  margin: 0;
+  line-height: 1;
+}
+
+.sandbox-quick-settings .switch-control__copy strong {
+  line-height: 1;
 }
 
 .sandbox-quick-settings .switch-control__copy strong,
@@ -1147,9 +1191,8 @@ select:not([multiple]) {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .sandbox-section--playback .sandbox-field--speed,
-  .sandbox-section--playback .sandbox-button--primary {
-    grid-column: 1;
+  .sandbox-playback-primary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .sandbox-stats {
@@ -1241,6 +1284,10 @@ select:not([multiple]) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .sandbox-playback-primary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .sandbox-button {
     min-height: 46px;
   }
@@ -1300,4 +1347,157 @@ select:not([multiple]) {
   .sandbox-disclosure__chevron {
     transition: none;
   }
+}
+
+/* The Sandbox follows the application theme while retaining its focused workspace layout. */
+:root[data-theme='light'] .sandbox-page {
+  background: #f7f9fd;
+  color: var(--text);
+}
+
+:root[data-theme='light'] .sandbox-controls,
+:root[data-theme='light'] .sandbox-stats,
+:root[data-theme='light'] .sandbox-legend,
+:root[data-theme='light'] .sandbox-identity,
+:root[data-theme='light'] .sandbox-restore {
+  border-color: rgb(96 119 155 / 28%);
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 18px 52px rgb(32 57 96 / 14%);
+  color: var(--text);
+}
+
+:root[data-theme='light'] .sandbox-controls {
+  background: rgb(255 255 255 / 94%);
+}
+
+:root[data-theme='light'] .sandbox-controls__heading h1,
+:root[data-theme='light'] .sandbox-section h2,
+:root[data-theme='light'] .sandbox-quick-settings .switch-control__copy strong,
+:root[data-theme='light'] .sandbox-range strong,
+:root[data-theme='light'] .sandbox-disclosure[open] > summary,
+:root[data-theme='light'] .sandbox-check,
+:root[data-theme='light'] .sandbox-dataset-selection strong,
+:root[data-theme='light'] .sandbox-controls .dataset-option__title strong,
+:root[data-theme='light'] .sandbox-stats > strong,
+:root[data-theme='light'] .sandbox-stats dd,
+:root[data-theme='light'] .sandbox-complete span strong {
+  color: var(--text);
+}
+
+:root[data-theme='light'] .sandbox-controls__heading small,
+:root[data-theme='light'] .sandbox-field,
+:root[data-theme='light'] .sandbox-number,
+:root[data-theme='light'] .sandbox-range,
+:root[data-theme='light'] .sandbox-amount,
+:root[data-theme='light'] .sandbox-picker-selection small,
+:root[data-theme='light'] .sandbox-dataset-selection small,
+:root[data-theme='light'] .sandbox-picker-selection__title i,
+:root[data-theme='light'] .sandbox-algorithm-limit,
+:root[data-theme='light'] .sandbox-amount__heading small,
+:root[data-theme='light'] .sandbox-amount__scale small,
+:root[data-theme='light'] .sandbox-amount__input > span,
+:root[data-theme='light'] .sandbox-quick-settings .switch-control__copy small,
+:root[data-theme='light'] .sandbox-disclosure > summary,
+:root[data-theme='light'] .sandbox-shortcuts p,
+:root[data-theme='light'] .sandbox-speed-help,
+:root[data-theme='light'] .sandbox-stats > span,
+:root[data-theme='light'] .sandbox-stats dt,
+:root[data-theme='light'] .sandbox-legend,
+:root[data-theme='light'] .sandbox-identity span {
+  color: var(--muted);
+}
+
+:root[data-theme='light'] .sandbox-field select,
+:root[data-theme='light'] .sandbox-number input,
+:root[data-theme='light'] .sandbox-controls .rich-select__trigger,
+:root[data-theme='light'] .sandbox-amount__input input,
+:root[data-theme='light'] .sandbox-button,
+:root[data-theme='light'] .sandbox-heading-actions button {
+  border-color: var(--border);
+  background-color: rgb(247 249 253 / 96%);
+  color: var(--text);
+}
+
+:root[data-theme='light'] .sandbox-controls option {
+  background: #ffffff;
+  color: var(--text);
+}
+
+:root[data-theme='light'] .sandbox-heading-actions button:hover,
+:root[data-theme='light'] .sandbox-restore:hover {
+  border-color: color-mix(in srgb, var(--blue) 42%, var(--border));
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+:root[data-theme='light'] .sandbox-controls .picker-icon,
+:root[data-theme='light'] .sandbox-dataset-selection .dataset-preview {
+  border-color: var(--border);
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+:root[data-theme='light'] .sandbox-controls .rich-select__popover,
+:root[data-theme='light'] .sandbox-controls .rich-select__group-label {
+  background: #ffffff;
+  color: var(--muted);
+}
+
+:root[data-theme='light'] .sandbox-controls .rich-select__option:hover,
+:root[data-theme='light'] .sandbox-controls .rich-select__option.is-active {
+  background: var(--surface);
+}
+
+:root[data-theme='light'] .sandbox-controls .rich-select__option[aria-selected='true'] {
+  background: var(--blue-soft);
+}
+
+:root[data-theme='light'] .sandbox-section,
+:root[data-theme='light'] .sandbox-quick-settings,
+:root[data-theme='light'] .sandbox-disclosure {
+  border-color: var(--border);
+}
+
+:root[data-theme='light'] .sandbox-button--primary {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #ffffff;
+}
+
+:root[data-theme='light'] .sandbox-button--danger {
+  border-color: color-mix(in srgb, var(--coral) 30%, var(--border));
+  background: color-mix(in srgb, var(--coral) 7%, #ffffff);
+  color: #a82934;
+}
+
+:root[data-theme='light'] .sandbox-dialog-backdrop {
+  background: rgb(40 58 86 / 32%);
+}
+
+:root[data-theme='light'] .sandbox-dialog,
+:root[data-theme='light'] .sandbox-complete {
+  border-color: var(--border);
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 28px 90px rgb(32 57 96 / 20%);
+  color: var(--text);
+}
+
+:root[data-theme='light'] .sandbox-dialog__copy h2 {
+  color: var(--text);
+}
+
+:root[data-theme='light'] .sandbox-dialog__copy p,
+:root[data-theme='light'] .sandbox-complete span {
+  color: var(--muted);
+}
+
+:root[data-theme='light'] .sandbox-complete button {
+  border-color: color-mix(in srgb, var(--teal) 34%, var(--border));
+  background: color-mix(in srgb, var(--teal) 9%, #ffffff);
+  color: #046f61;
+}
+
+:root[data-theme='light'][data-sandbox-hidden='true'] .topbar {
+  border-bottom-color: var(--border);
+  background: rgb(255 255 255 / 82%);
 }

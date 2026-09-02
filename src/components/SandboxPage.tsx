@@ -36,6 +36,7 @@ interface PendingAlgorithmAdjustment {
   previousAmount: number
   nextAmount: number
   maximum: number
+  exactAmount?: number
   powerOfTwo: boolean
 }
 
@@ -128,6 +129,7 @@ export function SandboxPage() {
           previousAmount: preferences.amount,
           nextAmount,
           maximum: selected.maximum,
+          exactAmount: selected.exactAmount,
           powerOfTwo: Boolean(selected.powerOfTwo),
         })
         return
@@ -311,8 +313,9 @@ export function SandboxPage() {
               <span className="sandbox-amount__heading">
                 <span>Amount</span>
                 <small>
-                  Max {amountMaximum.toLocaleString()}
-                  {sandboxAlgorithm?.powerOfTwo ? ' · powers of two' : ''}
+                  {sandboxAlgorithm?.exactAmount
+                    ? `Exactly ${sandboxAlgorithm.exactAmount.toLocaleString()}`
+                    : `Max ${amountMaximum.toLocaleString()}${sandboxAlgorithm?.powerOfTwo ? ' · powers of two' : ''}`}
                 </small>
               </span>
               <span className="sandbox-amount__input">
@@ -367,30 +370,40 @@ export function SandboxPage() {
 
           <section className="sandbox-section sandbox-section--playback" aria-labelledby="playback">
             <h2 id="playback">Playback</h2>
-            <label className="sandbox-field sandbox-field--speed">
-              <span>Speed mode</span>
-              <select
-                name="sandbox-speed-mode"
-                value={preferences.speedMode}
-                onChange={(event) =>
-                  update((current) => ({
-                    ...current,
-                    speedMode: event.target.value as SandboxSpeedMode,
-                  }))
-                }
+            <div className="sandbox-playback-primary">
+              <label className="sandbox-field sandbox-field--speed">
+                <span>Animation pace</span>
+                <select
+                  name="sandbox-speed-mode"
+                  value={preferences.speedMode}
+                  aria-describedby="sandbox-speed-help"
+                  onChange={(event) =>
+                    update((current) => ({
+                      ...current,
+                      speedMode: event.target.value as SandboxSpeedMode,
+                    }))
+                  }
+                >
+                  <option value="realtime">Detailed (slowest)</option>
+                  <option value="fast">Fast (recommended)</option>
+                  <option value="maximum">Maximum (fastest)</option>
+                </select>
+              </label>
+              <button
+                className="sandbox-button sandbox-button--primary"
+                onClick={status === 'running' ? pause : () => void start()}
               >
-                <option value="realtime">Real-time</option>
-                <option value="fast">Fast</option>
-                <option value="maximum">Maximum</option>
-              </select>
-            </label>
-            <button
-              className="sandbox-button sandbox-button--primary"
-              onClick={status === 'running' ? pause : () => void start()}
-            >
-              <AppIcon name={status === 'running' ? 'pause' : 'play'} aria-hidden="true" />
-              {status === 'running' ? 'Pause' : status === 'paused' ? 'Resume' : 'Start'}
-            </button>
+                <AppIcon name={status === 'running' ? 'pause' : 'play'} aria-hidden="true" />
+                {status === 'running' ? 'Pause' : status === 'paused' ? 'Resume' : 'Start'}
+              </button>
+            </div>
+            <small className="sandbox-speed-help" id="sandbox-speed-help">
+              {preferences.speedMode === 'realtime'
+                ? 'Small batches show the most sorting detail.'
+                : preferences.speedMode === 'fast'
+                  ? 'Larger batches balance clarity and finish time.'
+                  : 'Largest batches prioritize the quickest finish.'}
+            </small>
             <div className="sandbox-playback" aria-label="Sandbox playback controls">
               <button className="sandbox-button sandbox-button--secondary" onClick={reset}>
                 <AppIcon name="reset" aria-hidden="true" /> Reset
@@ -770,9 +783,11 @@ export function SandboxPage() {
                 Adjust amount for {pendingAdjustment.algorithmName}?
               </h2>
               <p id="sandbox-adjustment-copy">
-                {pendingAdjustment.powerOfTwo
-                  ? `${pendingAdjustment.algorithmName} supports power-of-two amounts up to ${pendingAdjustment.maximum.toLocaleString()} values.`
-                  : `${pendingAdjustment.algorithmName} supports up to ${pendingAdjustment.maximum.toLocaleString()} values.`}{' '}
+                {pendingAdjustment.exactAmount
+                  ? `${pendingAdjustment.algorithmName} uses a fixed schedule for exactly ${pendingAdjustment.exactAmount.toLocaleString()} values.`
+                  : pendingAdjustment.powerOfTwo
+                    ? `${pendingAdjustment.algorithmName} supports power-of-two amounts up to ${pendingAdjustment.maximum.toLocaleString()} values.`
+                    : `${pendingAdjustment.algorithmName} supports up to ${pendingAdjustment.maximum.toLocaleString()} values.`}{' '}
                 Selecting it will lower Amount from{' '}
                 {pendingAdjustment.previousAmount.toLocaleString()} to{' '}
                 {pendingAdjustment.nextAmount.toLocaleString()}.

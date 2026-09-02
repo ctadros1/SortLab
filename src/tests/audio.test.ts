@@ -61,13 +61,21 @@ class FakeOscillator extends FakeNode {
   stop() {}
 }
 
+class FakePanner extends FakeNode {
+  pan = new FakeAudioParam()
+}
+
 class FakeAudioContext {
   state: AudioContextState = 'running'
   currentTime = 1
   destination = new FakeNode()
   oscillators: FakeOscillator[] = []
+  gains: FakeGain[] = []
+  panners: FakePanner[] = []
   createGain() {
-    return new FakeGain()
+    const gain = new FakeGain()
+    this.gains.push(gain)
+    return gain
   }
   createDynamicsCompressor() {
     return new FakeCompressor()
@@ -76,6 +84,11 @@ class FakeAudioContext {
     const oscillator = new FakeOscillator()
     this.oscillators.push(oscillator)
     return oscillator
+  }
+  createStereoPanner() {
+    const panner = new FakePanner()
+    this.panners.push(panner)
+    return panner
   }
   async resume() {
     this.state = 'running'
@@ -156,6 +169,7 @@ describe('sound density, presets, and persistence', () => {
     expect(soundPresets.classic.minimumFrequency).toBe(120)
     expect(soundPresets.classic.maximumFrequency).toBe(1212)
     expect(soundPresets.minimal.maxPolyphony).toBeLessThan(soundPresets.classic.maxPolyphony)
+    for (const preset of Object.values(soundPresets)) expect(preset.events.write).toBe(true)
   })
 
   it('persists and validates Visualize sound preferences', () => {
@@ -192,5 +206,38 @@ describe('AudioEngine lifecycle', () => {
     expect(engine.getDebugState().activeVoices).toBe(0)
     await engine.resume()
     expect(contextsCreated).toBe(1)
+  })
+
+  it('routes Compare voices through independently mixed and panned outputs', async () => {
+    const fake = new FakeAudioContext()
+    const engine = new AudioEngine(() => fake as unknown as AudioContext)
+    engine.configure(createAudioSettings('classic', { enabled: true }))
+    engine.setOutputMix('first', 1, -0.72)
+    engine.setOutputMix('second', 0, 0.72)
+
+    await engine.play(compareEvent, 'first')
+    await engine.play({ ...compareEvent, sequence: 1 }, 'second')
+
+    expect(engine.getDebugState().outputGains).toMatchObject({ first: 1, second: 0 })
+    expect(engine.getDebugState().outputPans).toMatchObject({ first: -0.72, second: 0.72 })
+    expect(fake.panners.map((panner) => panner.pan.value)).toEqual([-0.72, 0.72])
+  })
+
+  it('schedules write-only algorithms such as Radix and Counting Sort', async () => {
+    const fake = new FakeAudioContext()
+    const engine = new AudioEngine(() => fake as unknown as AudioContext)
+    engine.configure(createAudioSettings('classic', { enabled: true }))
+
+    const played = await engine.play({
+      type: 'write',
+      values: [7],
+      dataset: [0, 3, 7, 9],
+      speed: 30,
+      sequence: 0,
+    })
+
+    expect(played).toBe(true)
+    expect(engine.getDebugState().scheduledEvents).toBe(1)
+    expect(fake.oscillators).toHaveLength(1)
   })
 })

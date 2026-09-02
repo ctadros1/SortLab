@@ -43,7 +43,7 @@ async function readStats(page: Page) {
 test('profile supported high-scale algorithms and queue bounds', async ({ page }) => {
   test.setTimeout(120_000)
   await page.goto('/#sandbox')
-  await page.getByLabel('Speed mode').selectOption('maximum')
+  await page.getByLabel('Animation pace').selectOption('maximum')
   await page.evaluate(() => {
     const state = { count: 0, longest: 0 }
     ;(window as unknown as { __sortlabLongTasks: typeof state }).__sortlabLongTasks = state
@@ -177,7 +177,7 @@ test('profile supported high-scale algorithms and queue bounds', async ({ page }
   })
 
   await setAmount(page, 512)
-  await page.getByLabel('Speed mode').selectOption('realtime')
+  await page.getByLabel('Animation pace').selectOption('realtime')
   await page.getByRole('button', { name: 'Start' }).click()
   const stopStarted = Date.now()
   await page.getByRole('button', { name: 'Stop' }).click()

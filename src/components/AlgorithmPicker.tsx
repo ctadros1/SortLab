@@ -1,6 +1,7 @@
 import { familyLabels } from '../algorithms/registry'
 import { getAlgorithmOptions, getCompareAlgorithmOptions } from '../ui/pickerOptions'
 import { AlgorithmIcon, AppIcon } from './Icon'
+import { AlgorithmCautionTooltip } from './AlgorithmCautionTooltip'
 import { RichCombobox } from './RichCombobox'
 
 interface Props {
@@ -54,7 +55,13 @@ export function AlgorithmPicker({
             <span className="algorithm-option__title">
               <strong>{option.algorithm.name}</strong>
               {option.algorithm.caution !== 'none' ? (
-                <AppIcon name="warning" aria-hidden="true" size={15} />
+                <AlgorithmCautionTooltip
+                  message={
+                    option.algorithm.warning ??
+                    option.algorithm.implementationNotes ??
+                    'This is an educational visualization rather than a production implementation.'
+                  }
+                />
               ) : null}
               {selected ? <AppIcon name="check" aria-hidden="true" size={15} /> : null}
             </span>

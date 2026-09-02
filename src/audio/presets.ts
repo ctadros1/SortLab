@@ -13,7 +13,7 @@ export const soundPresets: Record<SoundPresetId, SoundPreset> = {
     density: 'balanced',
     maxPolyphony: 12,
     gainScale: 0.78,
-    events: { compare: true, swap: true, write: false, pivot: true, completion: true },
+    events: { compare: true, swap: true, write: true, pivot: true, completion: true },
     autoGain: true,
   },
   soft: {
@@ -28,7 +28,7 @@ export const soundPresets: Record<SoundPresetId, SoundPreset> = {
     density: 'balanced',
     maxPolyphony: 10,
     gainScale: 0.58,
-    events: { compare: true, swap: true, write: false, pivot: false, completion: true },
+    events: { compare: true, swap: true, write: true, pivot: false, completion: true },
     autoGain: true,
   },
   minimal: {
@@ -43,7 +43,7 @@ export const soundPresets: Record<SoundPresetId, SoundPreset> = {
     density: 'sparse',
     maxPolyphony: 4,
     gainScale: 0.42,
-    events: { compare: true, swap: true, write: false, pivot: false, completion: true },
+    events: { compare: true, swap: true, write: true, pivot: false, completion: true },
     autoGain: true,
   },
 }

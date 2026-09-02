@@ -5,6 +5,7 @@ import {
   estimateSandboxOperations,
   isPowerOfTwo,
   operationsPerFrame,
+  sandboxLightVisualPalette,
   sandboxAlgorithms,
   sandboxAmountRestriction,
   sandboxOperationBudget,
@@ -34,17 +35,27 @@ describe('Sandbox algorithm and amount policy', () => {
     expect(new Set(sandboxAlgorithms.map((algorithm) => algorithm.id)).size).toBe(
       sandboxAlgorithms.length,
     )
+    expect(
+      sandboxAlgorithms.filter((algorithm) => algorithm.fidelity === 'actual').length,
+    ).toBeGreaterThan(55)
+    expect(
+      sandboxAlgorithms.filter((algorithm) => algorithm.fidelity === 'parameterized').length,
+    ).toBeGreaterThan(10)
+    expect(
+      sandboxAlgorithms.filter((algorithm) => algorithm.fidelity === 'simulation').length,
+    ).toBeGreaterThan(100)
     for (const algorithm of sandboxAlgorithms) {
       expect(algorithm.name).toBeTruthy()
       expect(algorithm.description.length).toBeGreaterThan(20)
       expect(algorithm.tags.length).toBeGreaterThan(0)
       expect(algorithm.maximum).toBeGreaterThan(0)
+      expect(algorithm.implementationNote.length).toBeGreaterThan(30)
     }
   })
 
   it('applies complexity-based limits and explains blocked amounts', () => {
     expect(sandboxAmountRestriction('bubble-optimized', 1024)).toBeNull()
-    expect(sandboxAmountRestriction('bubble-optimized', 2048)).toMatch(/limited to 1,024/i)
+    expect(sandboxAmountRestriction('bubble-optimized', 2048)).toMatch(/limited to 1,280/i)
     expect(sandboxAmountRestriction('merge', 8192)).toBeNull()
     expect(sandboxAmountRestriction('unknown', 64)).toMatch(/not available/i)
   })
@@ -65,7 +76,7 @@ describe('Sandbox algorithm and amount policy', () => {
   })
 
   it('caps pathological algorithms while keeping them discoverable', () => {
-    expect(sandboxAmountRestriction('bogo', 64)).toMatch(/limited to 16/i)
+    expect(sandboxAmountRestriction('bogo', 64)).toMatch(/limited to 20/i)
     expect(sandboxAmountRestriction('bogobogosort', 64)).toMatch(/limited to 12/i)
     expect(sandboxAmountRestriction('stooge', 128)).toBeNull()
   })
@@ -85,7 +96,8 @@ describe('Sandbox dataset catalog', () => {
 
   it('keeps signed and adversarial patterns distinct', () => {
     expect(generateSandboxArray('positive-negative', 64, 42).some((value) => value < 0)).toBe(true)
-    expect(generateSandboxArray('all-equal', 64, 42).every((value) => value === 50)).toBe(true)
+    expect(generateSandboxArray('all-equal', 64, 42).every((value) => value === 32)).toBe(true)
+    expect(generateSandboxArray('all-equal', 65, 42).every((value) => value === 33)).toBe(true)
     expect(generateSandboxArray('quick-killer', 64, 42)).not.toEqual(
       generateSandboxArray('sorted', 64, 42),
     )
@@ -107,6 +119,12 @@ describe('Sandbox registries, queue, and worker protocol', () => {
       expect(preset.active).toMatch(/^#/)
       expect(preset.sorted).toMatch(/^#/)
     }
+  })
+
+  it('uses a light canvas with dark-blue bars for the light application theme', () => {
+    expect(sandboxLightVisualPalette.background).toBe('#f7f9fd')
+    expect(sandboxLightVisualPalette.barLow).toBe('#0b1b3a')
+    expect(sandboxLightVisualPalette.barHigh).toBe('#174f91')
   })
 
   it('batches, drains, backpressures, and cancels a bounded queue', () => {

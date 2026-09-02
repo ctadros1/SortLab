@@ -1,5 +1,5 @@
 import { datasetRange } from '../audio/frequencyMapping'
-import { sandboxVisualPresets } from './config'
+import { sandboxLightVisualPalette, sandboxVisualPresets } from './config'
 import type { SandboxVisualSettings } from './types'
 
 function parseHex(value: string) {
@@ -54,7 +54,8 @@ export class SandboxRenderer {
     completionProgress = 0,
   ) {
     if (settings.quality !== this.quality) this.resize(settings.quality)
-    const palette = sandboxVisualPresets[settings.preset]
+    const lightTheme = document.documentElement.dataset.theme === 'light'
+    const palette = lightTheme ? sandboxLightVisualPalette : sandboxVisualPresets[settings.preset]
     const context = this.context
     if (settings.trail <= 0) {
       if (settings.backgroundStyle === 'vignette') {
@@ -80,6 +81,7 @@ export class SandboxRenderer {
     if (values.length === 0) return
 
     const { minimum, maximum } = datasetRange(values)
+    const isConstantDataset = maximum === minimum
     const range = Math.max(1, maximum - minimum)
     const barWidth = this.width / values.length
     const gap = barWidth > 2 ? Math.min(settings.gap, barWidth * 0.35) : 0
@@ -94,7 +96,7 @@ export class SandboxRenderer {
     const sortedThrough = Math.floor(values.length * completionProgress)
 
     for (let index = 0; index < values.length; index += 1) {
-      const ratio = (values[index] - minimum) / range
+      const ratio = isConstantDataset ? 0.5 : (values[index] - minimum) / range
       const height = Math.max(1, ratio * (this.height - 18) + 6)
       const x = index * barWidth
       const y = this.height - height
@@ -117,7 +119,7 @@ export class SandboxRenderer {
     context.shadowBlur = 0
 
     if (settings.showValues && values.length <= 128 && barWidth >= 7) {
-      context.fillStyle = 'rgba(255,255,255,.72)'
+      context.fillStyle = lightTheme ? 'rgba(11,27,58,.78)' : 'rgba(255,255,255,.72)'
       context.font = '10px ui-monospace, monospace'
       context.textAlign = 'center'
       for (let index = 0; index < values.length; index += 1) {

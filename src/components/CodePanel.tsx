@@ -7,6 +7,7 @@ import {
   type CodeLanguage,
   type CodeLine,
 } from '../code/algorithmCode'
+import type { FullAlgorithmCode } from '../code/fullAlgorithmCode'
 import type { AlgorithmMeta, SortEvent } from '../types'
 import type { RichOption } from '../ui/combobox'
 import { AlgorithmIcon, AppIcon } from './Icon'
@@ -29,6 +30,12 @@ function isCodeLanguage(value: string | null): value is CodeLanguage {
   return codeLanguages.some((language) => language.id === value)
 }
 
+function storedCodeLanguage(value: string | null): CodeLanguage {
+  if (value === 'c' || value === 'cpp') return 'c_cpp'
+  if (value === 'javascript') return 'typescript'
+  return isCodeLanguage(value) ? value : 'pseudocode'
+}
+
 function SyntaxLine({ line }: { line: CodeLine }) {
   return (
     <code aria-label={line.text} style={{ '--code-indent': line.indent } as React.CSSProperties}>
@@ -45,10 +52,13 @@ function SyntaxLine({ line }: { line: CodeLine }) {
 
 export function CodePanel({ algorithm, event }: { algorithm: AlgorithmMeta; event?: SortEvent }) {
   const [tab, setTab] = useState<'code' | 'explain'>('code')
+  const [codeView, setCodeView] = useState<'guided' | 'full'>('guided')
+  const [expanded, setExpanded] = useState(false)
+  const [fullCode, setFullCode] = useState<FullAlgorithmCode | null>(null)
   const [language, setLanguage] = useState<CodeLanguage>(() => {
     const stored =
       typeof window === 'undefined' ? null : window.localStorage.getItem(CODE_LANGUAGE_STORAGE_KEY)
-    return isCodeLanguage(stored) ? stored : 'pseudocode'
+    return storedCodeLanguage(stored)
   })
   const id = useId().replace(/:/g, '')
   const snippet = useMemo(() => getAlgorithmCodeSnippet(algorithm, language), [algorithm, language])
@@ -59,14 +69,40 @@ export function CodePanel({ algorithm, event }: { algorithm: AlgorithmMeta; even
     window.localStorage.setItem(CODE_LANGUAGE_STORAGE_KEY, language)
   }, [language])
 
+  useEffect(() => {
+    if (codeView !== 'full') return
+    let active = true
+    void import('../code/fullAlgorithmCode').then(({ getFullAlgorithmCode }) => {
+      if (active) setFullCode(getFullAlgorithmCode(algorithm, language))
+    })
+    return () => {
+      active = false
+    }
+  }, [algorithm, codeView, language])
+
+  useEffect(() => {
+    if (!expanded) return
+    const closeOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setExpanded(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [expanded])
+
   const handleTabKeys = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
     event.preventDefault()
     setTab((current) => (current === 'code' ? 'explain' : 'code'))
   }
 
+  const currentFullCode =
+    fullCode?.algorithmId === algorithm.id && fullCode.language === language ? fullCode : null
+
   return (
-    <aside className="code-panel" aria-label={`${algorithm.name} code and explanation`}>
+    <aside
+      className={`code-panel${expanded ? ' is-code-expanded' : ''}`}
+      aria-label={`${algorithm.name} code and explanation`}
+    >
       <div className="panel-heading">
         <div>
           <span className="section-label">Algorithm guide</span>
@@ -110,6 +146,38 @@ export function CodePanel({ algorithm, event }: { algorithm: AlgorithmMeta; even
           id={`${id}-code-panel`}
           aria-labelledby={`${id}-code-tab`}
         >
+          <div className="code-view-toolbar">
+            <div className="code-view-switch" role="group" aria-label="Code detail">
+              <button
+                type="button"
+                aria-pressed={codeView === 'guided'}
+                onClick={() => {
+                  setCodeView('guided')
+                  setExpanded(false)
+                }}
+              >
+                Guided steps
+              </button>
+              <button
+                type="button"
+                aria-pressed={codeView === 'full'}
+                onClick={() => setCodeView('full')}
+              >
+                Full implementation
+              </button>
+            </div>
+            {codeView === 'full' ? (
+              <button
+                type="button"
+                className="code-expand-button"
+                aria-expanded={expanded}
+                onClick={() => setExpanded((current) => !current)}
+              >
+                <AppIcon name={expanded ? 'close' : 'fullscreen'} aria-hidden="true" />
+                {expanded ? 'Close' : 'Expand'}
+              </button>
+            ) : null}
+          </div>
           <div className="code-language-row">
             <span>Language</span>
             <RichCombobox
@@ -135,39 +203,61 @@ export function CodePanel({ algorithm, event }: { algorithm: AlgorithmMeta; even
               )}
             />
           </div>
-          <ol className="pseudocode" aria-label={`${algorithm.name} ${language} code`}>
-            {snippet.lines.map((line, index) => {
-              const current = line.id === activeSemanticId
-              return (
-                <li
-                  className={current ? 'is-current' : ''}
-                  data-semantic-line={line.id}
-                  key={line.id}
-                  aria-current={current ? 'step' : undefined}
-                >
-                  <span className="code-pointer" aria-hidden="true">
-                    {current ? '›' : ''}
-                  </span>
-                  <span className="code-line-number" aria-hidden="true">
-                    {index + 1}
-                  </span>
-                  <SyntaxLine line={line} />
-                </li>
-              )
-            })}
+          {codeView === 'full' && currentFullCode ? (
+            <div className="full-code-note" data-fidelity={currentFullCode.fidelity}>
+              <strong>
+                {currentFullCode.fidelity === 'reference'
+                  ? 'Complete reference implementation'
+                  : 'Complete visualizer model'}
+              </strong>
+              <span>{currentFullCode.note}</span>
+            </div>
+          ) : null}
+          <ol
+            className={`pseudocode${codeView === 'full' ? ' full-code' : ''}`}
+            aria-label={`${algorithm.name} ${language} ${codeView === 'full' ? 'full implementation' : 'guided code'}`}
+          >
+            {(codeView === 'full' ? (currentFullCode?.lines ?? []) : snippet.lines).map(
+              (line, index) => {
+                const current = line.id === activeSemanticId
+                return (
+                  <li
+                    className={codeView === 'guided' && current ? 'is-current' : ''}
+                    data-semantic-line={line.id}
+                    key={`${line.id}-${index}`}
+                    aria-current={codeView === 'guided' && current ? 'step' : undefined}
+                  >
+                    <span className="code-pointer" aria-hidden="true">
+                      {codeView === 'guided' && current ? '›' : ''}
+                    </span>
+                    <span className="code-line-number" aria-hidden="true">
+                      {index + 1}
+                    </span>
+                    <SyntaxLine line={line} />
+                  </li>
+                )
+              },
+            )}
           </ol>
-          <section className="line-explanation" aria-live="polite">
-            <h3>
-              <AppIcon name="narration" aria-hidden="true" /> Current line
-            </h3>
-            <p>
-              {activeLine?.explanation ??
-                'Start the algorithm to connect each visual operation to this code.'}
+          {codeView === 'full' && !currentFullCode ? (
+            <p className="full-code-loading" role="status">
+              Loading the complete implementation…
             </p>
-            <span className="sr-only">
-              {activeLine ? `Current code line: ${activeLine.text}` : 'No active line yet.'}
-            </span>
-          </section>
+          ) : null}
+          {codeView === 'guided' ? (
+            <section className="line-explanation" aria-live="polite">
+              <h3>
+                <AppIcon name="narration" aria-hidden="true" /> Current line
+              </h3>
+              <p>
+                {activeLine?.explanation ??
+                  'Start the algorithm to connect each visual operation to this code.'}
+              </p>
+              <span className="sr-only">
+                {activeLine ? `Current code line: ${activeLine.text}` : 'No active line yet.'}
+              </span>
+            </section>
+          ) : null}
         </div>
       ) : (
         <div

@@ -214,7 +214,9 @@ export function useSandboxPlayer() {
     worker.postMessage({
       type: 'start',
       runId,
-      algorithm: algorithm.workerKind,
+      algorithmId: algorithm.id,
+      implementationId: algorithm.implementationId,
+      fallbackKind: algorithm.workerKind,
       values: sourceRef.current,
       batchSize: 512,
       operationBudget: sandboxOperationBudget(algorithm.id, sourceRef.current.length),
@@ -303,6 +305,7 @@ export function useSandboxPlayer() {
         }
         if (workerCompleteRef.current && queueRef.current.size === 0) {
           workerCompleteRef.current = false
+          activeRef.current.clear()
           completionStartedRef.current = now
           setStatus('complete')
           statusRef.current = 'complete'

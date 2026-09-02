@@ -2,11 +2,9 @@ import type { AlgorithmMeta } from '../types'
 
 export const codeLanguages = [
   { id: 'pseudocode', label: 'Pseudocode', abbreviation: 'PS' },
-  { id: 'c', label: 'C', abbreviation: 'C' },
-  { id: 'cpp', label: 'C++', abbreviation: 'C++' },
+  { id: 'c_cpp', label: 'C / C++', abbreviation: 'C/C++' },
   { id: 'java', label: 'Java', abbreviation: 'JV' },
   { id: 'python', label: 'Python', abbreviation: 'PY' },
-  { id: 'javascript', label: 'JavaScript', abbreviation: 'JS' },
   { id: 'typescript', label: 'TypeScript', abbreviation: 'TS' },
 ] as const
 
@@ -257,8 +255,7 @@ function codeFor(id: string, language: CodeLanguage, algorithmId: string) {
   if (id === 'structure.start') {
     if (language === 'pseudocode') return `procedure ${functionName}(a)`
     if (language === 'python') return `def ${functionName}(a):`
-    if (language === 'c') return `void ${functionName}(int a[], int n) {`
-    if (language === 'cpp') return `void ${functionName}(vector<int>& a) {`
+    if (language === 'c_cpp') return `void ${functionName}(int a[], size_t n) {`
     if (language === 'java') return `static void ${camel(algorithmId)}(int[] a) {`
     if (language === 'typescript') return `function ${camel(algorithmId)}(a: number[]): void {`
     return `function ${camel(algorithmId)}(a) {`
@@ -277,9 +274,7 @@ function codeFor(id: string, language: CodeLanguage, algorithmId: string) {
   if (id === 'done') return 'return a;'
   if (language === 'typescript') return `${operationName}(a, state satisfies SortState);`
   if (language === 'java') return `${operationName}(a, state);`
-  if (language === 'c') return `${operationName}(a, &state);`
-  if (language === 'cpp') return `${operationName}(a, state);`
-  if (language === 'javascript') return `${operationName}(a, state);`
+  if (language === 'c_cpp') return `${operationName}(a, &state);`
   return `step(${quotedId});`
 }
 

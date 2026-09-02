@@ -186,6 +186,7 @@ export function RichCombobox<T extends RichOption>({
       return
     }
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      if (searchable && event.currentTarget === searchRef.current) return
       event.preventDefault()
       if (searchable) {
         if (!open) {

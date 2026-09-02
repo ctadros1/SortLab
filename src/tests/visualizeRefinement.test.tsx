@@ -18,11 +18,9 @@ describe('Visualize code registry', () => {
   it('covers every algorithm and required language with the same semantic ids', () => {
     expect(codeLanguages.map((language) => language.id)).toEqual([
       'pseudocode',
-      'c',
-      'cpp',
+      'c_cpp',
       'java',
       'python',
-      'javascript',
       'typescript',
     ])
     for (const algorithm of algorithmRegistry) {

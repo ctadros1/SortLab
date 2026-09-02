@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 
 import type { SandboxOperation } from './types'
+import { runBrowserImplementation } from './browserImplementations'
 import type {
   SandboxWorkerRequest,
   SandboxWorkerResponse,
@@ -261,15 +262,24 @@ async function run(request: Extract<SandboxWorkerRequest, { type: 'start' }>) {
   const values = [...request.values]
   const emitter = new OperationEmitter(request.runId, request.batchSize, request.operationBudget)
   try {
-    if (request.algorithm === 'quick') await quickSort(values, emitter)
-    else if (request.algorithm === 'merge') await mergeSort(values, emitter)
-    else if (request.algorithm === 'heap') await heapSort(values, emitter)
-    else if (request.algorithm === 'radix') await radixSort(values, emitter)
-    else if (request.algorithm === 'counting') await countingSort(values, emitter)
-    else if (request.algorithm === 'shell') await shellSort(values, emitter)
-    else if (request.algorithm === 'bubble') await bubbleSort(values, emitter)
-    else if (request.algorithm === 'selection') await selectionSort(values, emitter)
-    else if (request.algorithm === 'insertion') await insertionSort(values, emitter)
+    if (request.implementationId) {
+      await runBrowserImplementation(request.implementationId, {
+        values,
+        compare: (left, right) => compare(emitter, left, right),
+        swap: (left, right) => swap(values, emitter, left, right),
+        write: (index, value) => write(values, emitter, index, value),
+        pivot: (index, value) => emitter.emit([3, index, value]),
+        range: (start, end) => emitter.emit([4, start, end]),
+      })
+    } else if (request.fallbackKind === 'quick') await quickSort(values, emitter)
+    else if (request.fallbackKind === 'merge') await mergeSort(values, emitter)
+    else if (request.fallbackKind === 'heap') await heapSort(values, emitter)
+    else if (request.fallbackKind === 'radix') await radixSort(values, emitter)
+    else if (request.fallbackKind === 'counting') await countingSort(values, emitter)
+    else if (request.fallbackKind === 'shell') await shellSort(values, emitter)
+    else if (request.fallbackKind === 'bubble') await bubbleSort(values, emitter)
+    else if (request.fallbackKind === 'selection') await selectionSort(values, emitter)
+    else if (request.fallbackKind === 'insertion') await insertionSort(values, emitter)
     else await bitonicSort(values, emitter)
     await emitter.flush()
     worker.postMessage({

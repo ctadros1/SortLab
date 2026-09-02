@@ -12,7 +12,9 @@ export type SandboxWorkerRequest =
   | {
       type: 'start'
       runId: number
-      algorithm: SandboxAlgorithm['workerKind']
+      algorithmId: SandboxAlgorithm['id']
+      implementationId?: SandboxAlgorithm['implementationId']
+      fallbackKind: SandboxAlgorithm['workerKind']
       values: number[]
       batchSize: number
       operationBudget: number
