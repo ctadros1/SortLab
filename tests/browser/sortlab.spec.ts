@@ -97,7 +97,7 @@ test('Learn opens each algorithm as a dedicated lesson and keeps the SortLab wor
   const assertNoConsoleErrors = failOnConsoleErrors(page)
   await page.goto('/#learn')
 
-  const wordmark = page.locator('.brand-wordmark')
+  const wordmark = page.getByRole('banner').locator('.brand-wordmark')
   await expect(wordmark).toHaveText('SortLab')
   await expect(wordmark).toHaveCSS('gap', '0px')
   await expect(
@@ -335,6 +335,11 @@ test('Visualize refines progress, legend, statistics, and complexity', async ({ 
   await expect(page.getByText('Active boundary', { exact: true })).toHaveCount(0)
   await expect(page.getByText('Animation duration reflects event count')).toHaveCount(0)
   await expect(page.locator('.complexity-grid dt')).toHaveText(['Worst', 'Average', 'Best'])
+  await expect(page.locator('.complexity-grid > div')).toHaveCount(3)
+  const complexitySurfaces = await page
+    .locator('.complexity-grid > div')
+    .evaluateAll((cards) => cards.map((card) => getComputedStyle(card).backgroundColor))
+  expect(new Set(complexitySurfaces).size).toBe(1)
   await expect(page.locator('.complexity-summary').getByText('Space', { exact: true })).toHaveCount(
     0,
   )
@@ -344,6 +349,99 @@ test('Visualize refines progress, legend, statistics, and complexity', async ({ 
   await page.getByRole('button', { name: 'Next' }).click()
   await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1')
   await expect(page.locator('.event-progress__current')).toBeVisible()
+  assertNoConsoleErrors()
+})
+
+test('Visualize keeps its source scale stable and previews the selected dataset', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.goto('/#visualize')
+
+  const visualization = page.locator('.bar-visualizer').first()
+  const initialMaximum = await visualization.evaluate((element) =>
+    element.style.getPropertyValue('--visual-maximum'),
+  )
+  expect(initialMaximum).toBeTruthy()
+
+  for (let step = 0; step < 40; step += 1) {
+    await page.getByRole('button', { name: 'Next' }).click()
+    await expect(visualization).toHaveCSS('--visual-maximum', initialMaximum)
+  }
+
+  await page.getByRole('button', { name: 'Reset' }).click()
+  const dataset = page.getByRole('combobox', { name: 'Dataset' })
+  await expect(dataset.locator('.dataset-preview')).toBeVisible()
+  await dataset.click()
+  await page.getByRole('option', { name: /^Reversed/ }).click()
+  await expect(dataset.locator('.dataset-preview')).toBeVisible()
+  assertNoConsoleErrors()
+})
+
+test('Footer, About, and the protected bug-report flow form one compact product shell', async ({
+  page,
+}) => {
+  const assertNoConsoleErrors = failOnConsoleErrors(page)
+  await page.addInitScript(() => {
+    const scope = window as unknown as {
+      turnstile: {
+        render: (
+          container: HTMLElement,
+          options: { action: string; callback: (token: string) => void },
+        ) => string
+        remove: () => void
+        reset: () => void
+      }
+    }
+    scope.turnstile = {
+      render: (container, options) => {
+        container.textContent = 'Protected by Turnstile'
+        container.dataset.renderedAction = options.action
+        queueMicrotask(() => options.callback('browser-test-token'))
+        return 'browser-test-widget'
+      },
+      remove: () => undefined,
+      reset: () => undefined,
+    }
+  })
+
+  let submitted: Record<string, unknown> | null = null
+  await page.route('**/api/report-bug', async (route) => {
+    submitted = (await route.request().postDataJSON()) as Record<string, unknown>
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' })
+  })
+
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto('/#visualize')
+  await page.getByRole('button', { name: 'Light theme' }).click()
+  const footer = page.locator('.app-footer')
+  await footer.scrollIntoViewIfNeeded()
+  const footerGeometry = await footer.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    return { left: bounds.left, right: bounds.right, height: bounds.height }
+  })
+  expect(footerGeometry.left).toBeCloseTo(288, 0)
+  expect(footerGeometry.right).toBeCloseTo(1050, 0)
+  expect(footerGeometry.height).toBeLessThanOrEqual(60)
+  await expect(footer).toContainText('SortLab')
+
+  await footer.getByRole('button', { name: 'About' }).click()
+  await expect(page).toHaveURL(/#about$/)
+  await expect(page.getByRole('heading', { name: 'About SortLab' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Open source and transparent' })).toBeVisible()
+  await expect(page.getByText('local-first', { exact: false })).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Report Bug' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Report a bug' })
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByLabel('Page')).toHaveValue('about')
+  await expect(dialog.locator('[data-rendered-action="turnstile-spin-v1"]')).toBeVisible()
+  await dialog
+    .getByLabel('What went wrong?')
+    .fill('The selected algorithm panel did not update after I changed the dataset.')
+  await dialog.getByRole('button', { name: 'Send report' }).click()
+  await expect(dialog.getByRole('heading', { name: 'Report received' })).toBeVisible()
+  expect(submitted).toMatchObject({ page: 'about', token: 'browser-test-token' })
   assertNoConsoleErrors()
 })
 
@@ -446,10 +544,21 @@ test('Compare keeps synchronized playback moving and supports pause and resume',
   const algorithmSearch = page.getByPlaceholder('Search name, alias, or family')
   await algorithmSearch.pressSequentially('parallel merge')
   const simulatedOption = page.getByRole('option', { name: /Parallel Merge Sort — Simulated/ })
-  await simulatedOption.locator('.algorithm-option__caution').hover()
-  await expect(page.getByRole('tooltip')).toHaveText(
+  const caution = simulatedOption.locator('.algorithm-option__caution')
+  await expect(caution).not.toHaveAttribute('title')
+  await caution.hover()
+  const cautionTooltip = page.getByRole('tooltip')
+  await expect(cautionTooltip).toHaveText(
     'Conceptual worker lanes are animated deterministically; this mode does not report real parallel speedup.',
   )
+  const cautionGeometry = await cautionTooltip.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    return { top: bounds.top, right: bounds.right, bottom: bounds.bottom, left: bounds.left }
+  })
+  expect(cautionGeometry.top).toBeGreaterThanOrEqual(0)
+  expect(cautionGeometry.left).toBeGreaterThanOrEqual(0)
+  expect(cautionGeometry.right).toBeLessThanOrEqual(1440)
+  expect(cautionGeometry.bottom).toBeLessThanOrEqual(1000)
   await algorithmSearch.press('Escape')
 
   const soundFader = page.getByRole('slider', { name: 'Sound crossfader' })
@@ -829,12 +938,33 @@ test('Sandbox warns before automatically lowering an unsupported amount', async 
 
   await page.getByRole('button', { name: 'Hide interface' }).click()
   await expect(page.locator('.sandbox-page')).toHaveClass(/is-interface-hidden/)
-  await expect(page.getByRole('button', { name: 'Restore Sandbox controls' })).toBeVisible()
+  const restore = page.getByRole('button', { name: 'Restore Sandbox controls' })
+  await expect(restore).toBeVisible()
+  await restore.hover()
+  const restoreTooltip = page.getByRole('tooltip', { name: 'Restore controls (H)' })
+  await expect(restoreTooltip).toBeVisible()
+  expect(
+    await restoreTooltip.evaluate((element) => element.getBoundingClientRect().top),
+  ).toBeGreaterThanOrEqual(0)
   await page.keyboard.press('h')
   await expect(page.locator('.sandbox-controls')).toBeVisible()
+
+  const shortcuts = page.getByRole('button', { name: 'Keyboard shortcuts' })
+  await shortcuts.scrollIntoViewIfNeeded()
+  await shortcuts.hover()
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Keyboard controls' })).toBeVisible()
+  await expect(
+    page.locator('details.sandbox-disclosure').filter({ hasText: 'Keyboard shortcuts' }),
+  ).toHaveCount(0)
+
   await page.getByRole('button', { name: 'Enter fullscreen' }).click()
   const exitFullscreen = page.getByRole('button', { name: 'Exit fullscreen' })
-  if (await exitFullscreen.isVisible()) await exitFullscreen.click()
+  if (await exitFullscreen.isVisible()) {
+    await expect(exitFullscreen.locator('svg')).toHaveClass(/lucide-minimize-2/)
+    await exitFullscreen.hover()
+    await expect(page.getByRole('tooltip', { name: 'Exit fullscreen (F)' })).toBeVisible()
+    await exitFullscreen.click()
+  }
   assertNoConsoleErrors()
 })
 

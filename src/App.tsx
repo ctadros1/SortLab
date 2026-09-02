@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { sortingAudioEngine } from './audio/AudioEngine'
+import { AboutPage } from './components/AboutPage'
+import { AppFooter } from './components/AppFooter'
 import { BenchmarkPage } from './components/BenchmarkPage'
 import { ComparePage } from './components/ComparePage'
 import { LearnPage } from './components/LearnPage'
 import { VisualizerPage } from './components/VisualizerPage'
 import { SandboxPage } from './components/SandboxPage'
 import { AppIcon, type AppIconName } from './components/Icon'
+import { ReportBugDialog } from './components/ReportBugDialog'
+import type { ReportPageId } from './config/reporting'
 
-type Route = 'visualize' | 'sandbox' | 'compare' | 'learn' | 'benchmark'
+type Route = 'visualize' | 'sandbox' | 'compare' | 'learn' | 'benchmark' | 'about'
 type Theme = 'light' | 'dark' | 'system'
 
 const routeOrder: Route[] = ['visualize', 'compare', 'learn', 'benchmark', 'sandbox']
@@ -18,6 +22,7 @@ const routeLabels: Record<Route, string> = {
   compare: 'Compare',
   learn: 'Learn',
   benchmark: 'Benchmark',
+  about: 'About',
 }
 
 const routeIcons: Record<Route, AppIconName> = {
@@ -26,6 +31,7 @@ const routeIcons: Record<Route, AppIconName> = {
   compare: 'compare',
   learn: 'learn',
   benchmark: 'benchmark',
+  about: 'info',
 }
 
 const themeOptions: Array<{ value: Theme; label: string; icon: AppIconName }> = [
@@ -45,6 +51,8 @@ export default function App() {
     () => (localStorage.getItem('sortlab-theme') as Theme) || 'system',
   )
   const [menuOpen, setMenuOpen] = useState(false)
+  const [bugReportOpen, setBugReportOpen] = useState(false)
+  const closeBugReport = useCallback(() => setBugReportOpen(false), [])
 
   useEffect(() => {
     const systemTheme = matchMedia('(prefers-color-scheme: dark)')
@@ -149,14 +157,17 @@ export default function App() {
       {route === 'compare' ? <ComparePage /> : null}
       {route === 'learn' ? <LearnPage /> : null}
       {route === 'benchmark' ? <BenchmarkPage /> : null}
+      {route === 'about' ? <AboutPage /> : null}
       {route !== 'sandbox' ? (
-        <footer className="app-footer">
-          <strong>SortLab</strong>
-          <span>
-            A local-first teaching tool. No accounts, analytics, trackers, external fonts, or
-            uploaded data.
-          </span>
-        </footer>
+        <AppFooter
+          currentRoute={route}
+          onAbout={() => chooseRoute('about')}
+          onHome={() => chooseRoute('visualize')}
+          onReportBug={() => setBugReportOpen(true)}
+        />
+      ) : null}
+      {bugReportOpen ? (
+        <ReportBugDialog initialPage={route as ReportPageId} onClose={closeBugReport} />
       ) : null}
     </div>
   )

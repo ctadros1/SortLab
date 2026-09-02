@@ -13,6 +13,11 @@
   "assets": {
     "directory": "./dist-cloudflare",
     "binding": "ASSETS",
-    "run_worker_first": ["/", "/sortlab"],
+    "run_worker_first": ["/", "/sortlab", "/sortlab/api/*"],
+  },
+  "vars": {
+    "TURNSTILE_VERIFY_URL": "https://sortlab-turnstile-siteverify.home-server-b7f.workers.dev/siteverify",
+    "REPORT_TO": "c@christiantadros.com",
+    "REPORT_FROM": "SortLab <hello@christiantadros.com>",
   },
 }

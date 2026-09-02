@@ -5,6 +5,7 @@ import './styles/main.css'
 import './styles/redesign.css'
 import './styles/sandbox.css'
 import './styles/learn.css'
+import './styles/product.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

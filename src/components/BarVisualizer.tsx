@@ -4,6 +4,7 @@ import { AppIcon, Diamond } from './Icon'
 
 interface Props {
   values: number[]
+  scaleValues?: number[]
   event?: SortEvent
   compact?: boolean
   label?: string
@@ -20,12 +21,14 @@ function MarkerIcon({ kind }: { kind: MarkerKind }) {
 
 export function BarVisualizer({
   values,
+  scaleValues,
   event,
   compact = false,
   label = 'Sorting visualization',
 }: Props) {
-  const minimum = Math.min(...values)
-  const maximum = Math.max(...values)
+  const scale = scaleValues?.length ? scaleValues : values
+  const minimum = Math.min(...scale)
+  const maximum = Math.max(...scale)
   const span = Math.max(1, maximum - minimum)
   const active = new Set(event?.indices ?? [])
   const rules = getBarDisplayRules(values.length, compact)
@@ -38,6 +41,8 @@ export function BarVisualizer({
       aria-label={`${label}. ${event?.narration ?? 'Ready to sort.'}`}
       style={
         {
+          '--visual-minimum': minimum,
+          '--visual-maximum': maximum,
           '--marker-headroom': `${rules.markerHeadroom}px`,
           '--value-headroom': `${rules.showValues ? rules.valueHeadroom : 0}px`,
         } as React.CSSProperties

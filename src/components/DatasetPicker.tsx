@@ -33,7 +33,8 @@ export function DatasetPicker({ value, onChange, disabled, portal = false }: Pro
       portal={portal}
       searchable={false}
       renderSelected={(option) => (
-        <span className="picker-selection picker-selection--text-only">
+        <span className="picker-selection picker-selection--dataset">
+          <DatasetPreview values={option.dataset.preview} />
           <span>
             <strong>{option.dataset.name}</strong>
             <small>{option.dataset.description}</small>

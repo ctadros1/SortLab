@@ -17,13 +17,15 @@ export function AlgorithmCautionTooltip({ message }: Props) {
   const show = (element: HTMLElement) => {
     const rect = element.getBoundingClientRect()
     const halfWidth = Math.min(160, Math.max(110, window.innerWidth / 2 - 16))
+    const placeAbove = window.innerHeight - rect.bottom < 120 && rect.top > 120
     setPosition({
       style: {
-        top: rect.bottom + 9,
+        top: placeAbove ? rect.top - 9 : rect.bottom + 9,
         left: Math.min(
           window.innerWidth - halfWidth,
           Math.max(halfWidth, rect.left + rect.width / 2),
         ),
+        transform: placeAbove ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
       },
     })
   }
@@ -35,7 +37,6 @@ export function AlgorithmCautionTooltip({ message }: Props) {
         role="img"
         aria-label={`Important: ${message}`}
         aria-describedby={position ? id : undefined}
-        title={message}
         onMouseEnter={(event) => show(event.currentTarget)}
         onMouseLeave={() => setPosition(null)}
         onPointerDown={(event) => {
@@ -60,7 +61,7 @@ export function AlgorithmCautionTooltip({ message }: Props) {
             >
               {message}
             </span>,
-            document.body,
+            document.fullscreenElement ?? document.body,
           )
         : null}
     </>

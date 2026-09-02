@@ -28,7 +28,9 @@ import type {
 import { AppIcon, ChevronRight } from './Icon'
 import { SandboxAlgorithmPicker } from './SandboxAlgorithmPicker'
 import { SandboxDatasetPicker } from './SandboxDatasetPicker'
+import { SandboxShortcutTip } from './SandboxShortcutTip'
 import { Switch } from './Switch'
+import { ViewportTooltip } from './ViewportTooltip'
 
 interface PendingAlgorithmAdjustment {
   algorithm: string
@@ -248,16 +250,17 @@ export function SandboxPage() {
       </div>
 
       {interfaceHidden ? (
-        <button
-          type="button"
-          className="sandbox-restore"
-          onClick={() => setInterfaceHidden(false)}
-          aria-label="Restore Sandbox controls"
-          data-tooltip="Restore controls (H)"
-        >
-          <AppIcon name="restore" aria-hidden="true" />
-          <span>Show controls</span>
-        </button>
+        <ViewportTooltip label="Restore controls (H)" placement="left">
+          <button
+            type="button"
+            className="sandbox-restore"
+            onClick={() => setInterfaceHidden(false)}
+            aria-label="Restore Sandbox controls"
+          >
+            <AppIcon name="restore" aria-hidden="true" />
+            <span>Show controls</span>
+          </button>
+        </ViewportTooltip>
       ) : null}
 
       {!interfaceHidden ? (
@@ -269,22 +272,24 @@ export function SandboxPage() {
               <small>High-scale sorting playground</small>
             </div>
             <div className="sandbox-heading-actions">
-              <button
-                type="button"
-                onClick={() => void toggleFullscreen()}
-                aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                data-tooltip="Fullscreen (F)"
-              >
-                <AppIcon name="fullscreen" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setInterfaceHidden(true)}
-                aria-label="Hide interface"
-                data-tooltip="Hide interface (H)"
-              >
-                <AppIcon name="hide" aria-hidden="true" />
-              </button>
+              <ViewportTooltip label={fullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
+                <button
+                  type="button"
+                  onClick={() => void toggleFullscreen()}
+                  aria-label={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  <AppIcon name={fullscreen ? 'exitFullscreen' : 'fullscreen'} aria-hidden="true" />
+                </button>
+              </ViewportTooltip>
+              <ViewportTooltip label="Hide interface (H)">
+                <button
+                  type="button"
+                  onClick={() => setInterfaceHidden(true)}
+                  aria-label="Hide interface"
+                >
+                  <AppIcon name="hide" aria-hidden="true" />
+                </button>
+              </ViewportTooltip>
             </div>
           </div>
 
@@ -751,18 +756,7 @@ export function SandboxPage() {
             </div>
           </details>
 
-          <details className="sandbox-disclosure sandbox-shortcuts">
-            <summary>
-              <span>
-                <AppIcon name="keyboard" aria-hidden="true" /> Keyboard shortcuts
-              </span>
-              <ChevronRight className="sandbox-disclosure__chevron" aria-hidden="true" />
-            </summary>
-            <p>
-              Space play/pause · R reset · S shuffle · M mute · H interface · F fullscreen · ↑/↓
-              speed
-            </p>
-          </details>
+          <SandboxShortcutTip />
         </aside>
       ) : null}
 

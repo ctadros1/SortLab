@@ -31,6 +31,7 @@ import {
   Maximize2,
   Monitor,
   Menu,
+  Minimize2,
   Moon,
   MoveHorizontal,
   Pause,
@@ -89,6 +90,7 @@ export type AppIconName =
   | 'reset'
   | 'restore'
   | 'fullscreen'
+  | 'exitFullscreen'
   | 'hide'
   | 'sandbox'
   | 'search'
@@ -141,6 +143,7 @@ const appIcons: Record<AppIconName, LucideIcon> = {
   reset: RotateCcw,
   restore: Eye,
   fullscreen: Maximize2,
+  exitFullscreen: Minimize2,
   hide: EyeOff,
   sandbox: SlidersHorizontal,
   search: Search,

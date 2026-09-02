@@ -10,7 +10,7 @@ import {
 } from '../code/algorithmCode'
 import { CodePanel } from '../components/CodePanel'
 import { EventProgress } from '../components/EventProgress'
-import { VisualLegend } from '../components/BarVisualizer'
+import { BarVisualizer, VisualLegend } from '../components/BarVisualizer'
 import { StatsStrip } from '../components/StatsStrip'
 import { calculateProgressMilestones } from '../ui/progress'
 
@@ -89,5 +89,14 @@ describe('Visualize presentation refinements', () => {
     expect(markup).toContain('data-stat="current-phase"')
     expect(markup).toContain('data-stat="js-execution"')
     expect(markup).toContain('JS execution')
+  })
+
+  it('keeps the bar-height domain anchored to the source array during transient events', () => {
+    const markup = renderToStaticMarkup(
+      <BarVisualizer values={[10, 20]} scaleValues={[10, 100]} label="Stable scale test" />,
+    )
+    expect(markup).toContain('--visual-minimum:10')
+    expect(markup).toContain('--visual-maximum:100')
+    expect(markup).not.toContain('height:80%')
   })
 })

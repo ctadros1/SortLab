@@ -317,7 +317,7 @@ export function RichCombobox<T extends RichOption>({
         <ChevronDown aria-hidden="true" size={18} />
       </button>
       {portal && typeof document !== 'undefined'
-        ? popover && createPortal(popover, document.body)
+        ? popover && createPortal(popover, document.fullscreenElement ?? document.body)
         : popover}
     </div>
   )

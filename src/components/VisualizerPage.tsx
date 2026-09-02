@@ -126,7 +126,11 @@ export function VisualizerPage() {
             <AppIcon name="warning" aria-hidden="true" /> {customError ?? player.error}
           </div>
         ) : null}
-        <BarVisualizer values={player.array} event={player.currentEvent} />
+        <BarVisualizer
+          values={player.array}
+          scaleValues={player.source}
+          event={player.currentEvent}
+        />
         <VisualLegend />
         <EventProgress current={player.eventIndex + 1} total={player.events.length} />
         <StatsStrip

@@ -8,6 +8,9 @@ import {
   visualizeAlgorithmRegistry,
 } from '../algorithms/registry'
 import { AlgorithmPicker } from '../components/AlgorithmPicker'
+import { AboutPage } from '../components/AboutPage'
+import { AlgorithmCautionTooltip } from '../components/AlgorithmCautionTooltip'
+import { AppFooter } from '../components/AppFooter'
 import { DatasetPicker } from '../components/DatasetPicker'
 import { SandboxDatasetPicker } from '../components/SandboxDatasetPicker'
 import { MathNotation } from '../components/MathNotation'
@@ -151,13 +154,13 @@ describe('accessible interaction utilities', () => {
     expect(nextSwitchState(true)).toBe(false)
   })
 
-  it('renders the selected dataset without an extra inline icon', () => {
+  it('renders the selected dataset with its distribution preview', () => {
     const html = renderToStaticMarkup(
       <DatasetPicker value="nearly-sorted" onChange={() => undefined} />,
     )
     expect(html).toContain('Nearly sorted')
-    expect(html).toContain('picker-selection--text-only')
-    expect(html).not.toContain('picker-icon--dataset')
+    expect(html).toContain('picker-selection--dataset')
+    expect(html).toContain('dataset-preview')
   })
 
   it('renders the Sandbox dataset picker with a distribution preview', () => {
@@ -181,6 +184,31 @@ describe('accessible interaction utilities', () => {
     expect(html).toContain('switch-control--plain')
     expect(html).not.toContain('switch-control__icon')
     expect(html).toContain('role="switch"')
+  })
+
+  it('keeps caution copy in one custom tooltip rather than a native title', () => {
+    const html = renderToStaticMarkup(
+      <AlgorithmCautionTooltip message="This implementation is educational." />,
+    )
+    expect(html).toContain('aria-label="Important: This implementation is educational."')
+    expect(html).not.toContain('title=')
+  })
+
+  it('presents the open-source About page and compact product footer', () => {
+    const about = renderToStaticMarkup(<AboutPage />)
+    const footer = renderToStaticMarkup(
+      <AppFooter
+        currentRoute="about"
+        onAbout={() => undefined}
+        onHome={() => undefined}
+        onReportBug={() => undefined}
+      />,
+    )
+    expect(about).toContain('Open source and transparent')
+    expect(about).not.toContain('local-first')
+    expect(footer).toContain('Sort<span>Lab</span>')
+    expect(footer).toContain('Report Bug')
+    expect(footer).toContain('https://github.com/ctadros1/sorting-playground')
   })
 })
 
