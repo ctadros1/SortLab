@@ -210,7 +210,7 @@ describe('accessible interaction utilities', () => {
     expect(about).not.toContain('An educational model, clearly labeled')
     expect(footer).toContain('Sort<span>Lab</span>')
     expect(footer).toContain('Report Bug')
-    expect(footer).toContain('https://github.com/ctadros1/sort-lab')
+    expect(footer).toContain('https://github.com/ctadros1/SortLab')
   })
 })
 

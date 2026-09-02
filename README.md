@@ -18,7 +18,7 @@
   <a href="https://project.christiantadros.com/sortlab/">
     <img src="https://img.shields.io/badge/Open_SortLab-075EE8?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Open SortLab">
   </a>
-  <a href="https://github.com/ctadros1/sort-lab">
+  <a href="https://github.com/ctadros1/SortLab">
     <img src="https://img.shields.io/badge/View_source-081226?style=for-the-badge&logo=github&logoColor=white" alt="View source on GitHub">
   </a>
 </p>
@@ -279,7 +279,7 @@ Shortcuts do not fire while focus is inside an input, button, or text area.
 SortLab requires Node.js 22 or later.
 
 ```bash
-git clone https://github.com/ctadros1/sort-lab.git
+git clone https://github.com/ctadros1/SortLab.git
 cd sort-lab
 npm ci
 npm run dev
@@ -359,6 +359,6 @@ Review the [deployment guide](docs/deployment.md) before changing production or 
 
 <p align="center">
   <a href="https://project.christiantadros.com/sortlab/">Open SortLab</a> ·
-  <a href="https://github.com/ctadros1/sort-lab/issues">Report an issue</a> ·
+  <a href="https://github.com/ctadros1/SortLab/issues">Report an issue</a> ·
   <a href="#sortlab">Back to top</a>
 </p>

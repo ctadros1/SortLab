@@ -27,7 +27,7 @@ export function AppFooter({ currentRoute, onAbout, onHome, onReportBug }: Props)
         >
           About
         </button>
-        <a href="https://github.com/ctadros1/sort-lab" target="_blank" rel="noreferrer">
+        <a href="https://github.com/ctadros1/SortLab" target="_blank" rel="noreferrer">
           GitHub <span aria-hidden="true">↗</span>
         </a>
         <button type="button" onClick={onReportBug}>
